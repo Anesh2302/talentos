@@ -17,14 +17,9 @@ if os.environ.get("VERCEL"):
         else:
             os.environ["DATABASE_URL"] = "sqlite:////tmp/talentos.db"
 
-try:
-    from talentos import create_app
-    print("=== create_app imported successfully ===", file=sys.stderr)
-    app = create_app()
-    print("=== app created successfully ===", file=sys.stderr)
-except Exception as e:
-    import traceback
-    print("=== ERROR creating app ===", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    print(f"=== Exception: {e} ===", file=sys.stderr)
-    raise
+import logging
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
+from talentos import create_app
+
+app = create_app()
