@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
-from flask_login import login_required, current_user
-from ..models import User, UserSkill, Skill, db
+from flask_login import login_required, current_user, logout_user
+from ..models import User, UserSkill, Skill, db, generate_session_token
+from ..otp import generate_secret
 
 bp = Blueprint("profile", __name__, url_prefix="/profile")
 
@@ -46,3 +47,57 @@ def edit_profile():
 def public_profile(user_id):
     user = User.query.get_or_404(user_id)
     return render_template("profile/public.html", profile=user)
+
+
+@bp.route("/change-password", methods=["POST"])
+@login_required
+def change_password():
+    current_pw = request.form.get("current_password", "")
+    new_pw = request.form.get("new_password", "")
+    confirm_pw = request.form.get("confirm_password", "")
+
+    if not current_user.check_password(current_pw):
+        flash("Current password is incorrect.", "error")
+        return redirect(url_for("profile.edit_profile"))
+
+    if new_pw != confirm_pw:
+        flash("New passwords do not match.", "error")
+        return redirect(url_for("profile.edit_profile"))
+
+    if len(new_pw) < 6:
+        flash("Password must be at least 6 characters.", "error")
+        return redirect(url_for("profile.edit_profile"))
+
+    current_user.set_password(new_pw)
+    current_user.session_token = generate_session_token()
+    db.session.commit()
+    logout_user()
+    flash("Password changed. Please log in again.", "success")
+    return redirect(url_for("auth.login"))
+
+
+@bp.route("/enable-otp", methods=["POST"])
+@login_required
+def enable_otp():
+    pw = request.form.get("password", "")
+    if not current_user.check_password(pw):
+        flash("Invalid password.", "error")
+        return redirect(url_for("profile.edit_profile"))
+    current_user.otp_secret = generate_secret()
+    current_user.otp_enabled = True
+    db.session.commit()
+    flash("OTP two-factor authentication enabled.", "success")
+    return redirect(url_for("profile.edit_profile"))
+
+
+@bp.route("/disable-otp", methods=["POST"])
+@login_required
+def disable_otp():
+    pw = request.form.get("password", "")
+    if not current_user.check_password(pw):
+        flash("Invalid password.", "error")
+        return redirect(url_for("profile.edit_profile"))
+    current_user.otp_enabled = False
+    db.session.commit()
+    flash("OTP two-factor authentication disabled.", "success")
+    return redirect(url_for("profile.edit_profile"))

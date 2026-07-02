@@ -1,10 +1,8 @@
 import os
 import json as json_mod
 from functools import wraps
-from datetime import date, datetime
-from io import StringIO
-import csv
-from flask import Blueprint, jsonify, request, render_template, Response
+from datetime import datetime
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for
 from flask_login import login_required, current_user
 from ..models import User, Candidate, Job, Todo, LoginHistory
 from .. import db
@@ -25,21 +23,7 @@ def admin_required(f):
 @bp.route("/dashboard")
 @admin_required
 def dashboard():
-    todos_today = Todo.query.filter(
-        Todo.due_date == date.today()
-    ).order_by(Todo.scheduled_time).all()
-    todos_pending = Todo.query.filter(
-        Todo.status == "pending"
-    ).order_by(Todo.priority.desc()).all()
-    stats = {
-        "total": Todo.query.count(),
-        "pending": Todo.query.filter_by(status="pending").count(),
-        "today": len(todos_today),
-        "users": User.query.count(),
-        "candidates": Candidate.query.count(),
-        "jobs": Job.query.count(),
-    }
-    return render_template("dashboard.html", todos=todos_today, pending=todos_pending, stats=stats)
+    return redirect(url_for("main.dashboard"))
 
 
 @bp.route("/security")
@@ -64,6 +48,13 @@ def security_dashboard():
 
 
 @bp.route("/users")
+@admin_required
+def users_page():
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template("admin/users.html", users=users, active="admin_users")
+
+
+@bp.route("/users/json")
 @login_required
 def list_users():
     users = User.query.all()
@@ -266,6 +257,31 @@ def export_jobs():
         w.writerow([j.id, j.title, j.description, j.department, j.location, j.status, j.created_at])
     return Response(si.getvalue(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment;filename=jobs.csv"})
+
+
+@bp.route("/users/<int:user_id>/role", methods=["POST"])
+@admin_required
+def update_user_role(user_id):
+    user = User.query.get_or_404(user_id)
+    role = request.form.get("role", "")
+    if role in ("admin", "recruiter", "candidate"):
+        user.role = role
+        db.session.commit()
+        flash(f"{user.name} role updated to {role}", "success")
+    return redirect(url_for("admin.users_page"))
+
+
+@bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash("Cannot delete yourself.", "error")
+        return redirect(url_for("admin.users_page"))
+    db.session.delete(user)
+    db.session.commit()
+    flash(f"User {user.name} deleted.", "success")
+    return redirect(url_for("admin.users_page"))
 
 
 @bp.route("/login-history")

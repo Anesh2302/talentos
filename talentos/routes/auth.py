@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from flask_login import login_user, logout_user, login_required, current_user
-from ..models import User, PasswordResetToken, LoginHistory, BackupCode
+from ..models import User, PasswordResetToken, LoginHistory, BackupCode, generate_session_token
 from ..otp import generate_secret, generate_otp, verify_otp, send_otp_email
 from .. import db
 
@@ -108,6 +108,7 @@ def login():
             return jsonify({"error": "Invalid OTP"}), 401
 
     user.login_attempts = 0
+    user.session_token = generate_session_token()
     db.session.commit()
     _record_login(user.email, True, user.id)
     login_user(user)

@@ -6,7 +6,17 @@ from . import db, login_manager
 
 @login_manager.user_loader
 def load_user(user_id):
+    if ":" in user_id:
+        uid, token = user_id.split(":", 1)
+        user = User.query.get(int(uid))
+        if user and user.session_token == token:
+            return user
+        return None
     return User.query.get(int(user_id))
+
+def generate_session_token():
+    import secrets
+    return secrets.token_hex(32)
 
 
 class User(UserMixin, db.Model):
@@ -26,10 +36,14 @@ class User(UserMixin, db.Model):
     is_verified = db.Column(db.Boolean, default=False)
     login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
+    session_token = db.Column(db.String(64), default="")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     company = db.relationship("Company", foreign_keys=[company_id], lazy=True)
     skills = db.relationship("UserSkill", backref="user", lazy=True)
+
+    def get_id(self):
+        return f"{self.id}:{self.session_token}"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

@@ -103,6 +103,11 @@
     {% endif %}
     <a href="/messages" class="{% if active == 'messages' %}active{% endif %}">Messages</a>
     <a href="/profile" class="{% if active == 'profile' %}active{% endif %}">Profile</a>
+    {% if current_user.role == 'admin' %}
+    <hr style="border-color:#30363d;margin:10px 20px;">
+    <a href="/admin/users" class="{% if active == 'admin_users' %}active{% endif %}">Users</a>
+    <a href="/admin/security" class="{% if active == 'admin_security' %}active{% endif %}">Security</a>
+    {% endif %}
     <hr style="border-color:#30363d;margin:10px 20px;">
     <a href="/auth/logout">Sign Out</a>
   </div>

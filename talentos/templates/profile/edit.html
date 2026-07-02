@@ -3,7 +3,8 @@
 {% block heading %}Edit Profile{% endblock %}
 {% block content %}
 <div class="card">
-  <form method="POST">
+  <h3>Profile Info</h3>
+  <form method="POST" action="/profile/edit">
     <div class="form-row">
       <div><label for="name">Full Name</label><input type="text" id="name" name="name" value="{{ current_user.name }}" required></div>
       <div><label for="headline">Headline</label><input type="text" id="headline" name="headline" value="{{ current_user.headline or '' }}" placeholder="e.g. Senior Software Engineer"></div>
@@ -22,4 +23,53 @@
     <a href="/profile" class="btn btn-secondary">Cancel</a>
   </form>
 </div>
+
+<div class="card">
+  <h3>Change Password</h3>
+  <form method="POST" action="/profile/change-password">
+    <label for="current_password">Current Password</label>
+    <input type="password" id="current_password" name="current_password" required>
+    <label for="new_password">New Password</label>
+    <input type="password" id="new_password" name="new_password" required minlength="6">
+    <label for="confirm_password">Confirm New Password</label>
+    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+    <button type="submit" class="btn btn-primary">Change Password</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Two-Factor Authentication (OTP)</h3>
+  {% if current_user.otp_enabled %}
+  <p style="color:#3fb950;margin-bottom:12px">✓ OTP is currently enabled</p>
+  <form method="POST" action="/profile/disable-otp">
+    <label for="otp_password">Enter your password to disable</label>
+    <input type="password" id="otp_password" name="password" required>
+    <button type="submit" class="btn btn-danger">Disable OTP</button>
+  </form>
+  {% else %}
+  <p style="color:#8b949e;margin-bottom:12px">OTP is disabled. Enable two-factor authentication for extra security.</p>
+  <form method="POST" action="/profile/enable-otp">
+    <label for="otp_password">Enter your password to enable</label>
+    <input type="password" id="otp_password" name="password" required>
+    <button type="submit" class="btn btn-primary">Enable OTP</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Login History</h3>
+  <div id="login-history"><p class="empty">Loading...</p></div>
+</div>
+
+<script>
+fetch('/auth/login-history').then(r=>r.json()).then(data=>{
+  const el = document.getElementById('login-history');
+  if (!data.length) { el.innerHTML = '<p class="empty">No login history</p>'; return; }
+  let html = '<table><tr><th>IP</th><th>Status</th><th>Time</th></tr>';
+  data.forEach(e=>{
+    html += `<tr><td>${e.ip}</td><td><span class="badge ${e.success?'open':'rejected'}">${e.success?'Success':'Failed'}</span></td><td>${new Date(e.timestamp).toLocaleString()}</td></tr>`;
+  });
+  el.innerHTML = html + '</table>';
+}).catch(()=>document.getElementById('login-history').innerHTML='<p class="empty">Could not load history</p>');
+</script>
 {% endblock %}

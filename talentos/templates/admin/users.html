@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Admin Users{% endblock %}
+{% block heading %}User Management{% endblock %}
+{% block content %}
+<div class="card">
+  <table>
+    <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>OTP</th><th>Logins</th><th>Joined</th><th>Actions</th></tr>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.id }}</td>
+      <td><a href="/profile/{{ u.id }}" style="color:#58a6ff;text-decoration:none">{{ u.name }}</a></td>
+      <td>{{ u.email }}</td>
+      <td>
+        <form method="POST" action="/admin/users/{{ u.id }}/role" style="display:flex;gap:4px;margin:0">
+          <select name="role" style="margin:0;width:110px;padding:4px 8px;font-size:12px">
+            <option value="candidate" {% if u.role == 'candidate' %}selected{% endif %}>Candidate</option>
+            <option value="recruiter" {% if u.role == 'recruiter' %}selected{% endif %}>Recruiter</option>
+            <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+          </select>
+          <button type="submit" class="btn btn-secondary" style="padding:4px 8px;font-size:11px">Set</button>
+        </form>
+      </td>
+      <td>{% if u.is_verified %}<span style="color:#3fb950">✓</span>{% else %}<span style="color:#f85149">✕</span>{% endif %}</td>
+      <td>{% if u.otp_enabled %}<span style="color:#3fb950">✓</span>{% else %}—{% endif %}</td>
+      <td>{{ u.login_attempts }}</td>
+      <td>{{ u.created_at.strftime('%b %d, %Y') }}</td>
+      <td>
+        {% if u.id != current_user.id %}
+        <form method="POST" action="/admin/users/{{ u.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this user?')">
+          <button type="submit" class="btn btn-danger" style="padding:4px 8px;font-size:11px">Delete</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
