@@ -9,7 +9,15 @@ if os.environ.get("VERCEL"):
     if not db_url or db_url.startswith("sqlite:///"):
         pg_url = os.environ.get("POSTGRES_URL", "")
         if pg_url:
-            os.environ["DATABASE_URL"] = pg_url.replace("?sslmode=require", "")
+            db_url = pg_url.replace("?sslmode=require", "")
+            if db_url.startswith("postgres://"):
+                db_url = "postgresql" + db_url[len("postgres"):]
+            # Try psycopg2 first, fall back to pg8000 (pure Python)
+            try:
+                __import__("psycopg2")
+            except ImportError:
+                db_url = db_url.replace("postgresql://", "postgresql+pg8000://")
+            os.environ["DATABASE_URL"] = db_url
         else:
             os.environ["DATABASE_URL"] = "sqlite:////tmp/talentos.db"
 
