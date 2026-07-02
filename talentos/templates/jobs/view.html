@@ -39,8 +39,12 @@
 
   <div style="margin-top:24px;display:flex;gap:10px">
     {% if current_user.is_authenticated and current_user.role == 'candidate' %}
-    <form method="POST" action="/jobs/{{ job.id }}/apply" style="display:inline">
-      <button type="submit" class="btn btn-primary">Apply Now</button>
+    <form method="POST" action="/jobs/{{ job.id }}/apply" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:500px">
+      <textarea name="cover_letter" placeholder="Cover letter (optional)" style="min-height:80px;margin:0"></textarea>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="file" name="resume" accept=".pdf,.doc,.docx,.txt" style="flex:1;margin:0;padding:8px">
+        <button type="submit" class="btn btn-primary" style="white-space:nowrap">Apply Now</button>
+      </div>
     </form>
     {% endif %}
     {% if current_user.is_authenticated and (current_user.id == job.created_by or current_user.role == 'admin') %}

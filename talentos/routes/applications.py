@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
+import base64
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from ..models import Application, JobPosting, User, db
 from datetime import datetime
+import io
 
 bp = Blueprint("applications", __name__, url_prefix="/applications")
 
@@ -56,3 +58,44 @@ def update_score(id):
     except ValueError:
         flash("Invalid score", "error")
     return redirect(url_for("applications.view_application", id=id))
+
+
+@bp.route("/<int:id>/resume", methods=["POST"])
+@login_required
+def upload_resume(id):
+    app = Application.query.get_or_404(id)
+    if current_user.id != app.user_id and current_user.role not in ("admin", "recruiter"):
+        flash("Access denied", "error")
+        return redirect(url_for("applications.list_applications"))
+    if "resume" not in request.files:
+        flash("No file selected", "error")
+        return redirect(url_for("applications.view_application", id=id))
+    f = request.files["resume"]
+    if not f.filename:
+        flash("No file selected", "error")
+        return redirect(url_for("applications.view_application", id=id))
+    app.resume_data = base64.b64encode(f.read()).decode()
+    app.resume_filename = f.filename
+    app.resume_mime = f.content_type or "application/octet-stream"
+    db.session.commit()
+    flash("Resume uploaded", "success")
+    return redirect(url_for("applications.view_application", id=id))
+
+
+@bp.route("/<int:id>/resume/download")
+@login_required
+def download_resume(id):
+    app = Application.query.get_or_404(id)
+    if current_user.id != app.user_id and current_user.role not in ("admin", "recruiter"):
+        flash("Access denied", "error")
+        return redirect(url_for("applications.list_applications"))
+    if not app.resume_data:
+        flash("No resume uploaded", "error")
+        return redirect(url_for("applications.view_application", id=id))
+    data = base64.b64decode(app.resume_data)
+    return send_file(
+        io.BytesIO(data),
+        mimetype=app.resume_mime or "application/octet-stream",
+        as_attachment=True,
+        download_name=app.resume_filename or "resume.pdf",
+    )

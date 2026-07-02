@@ -4,12 +4,13 @@
 {% block content %}
 {% if applications %}
 <table>
-  <tr><th>Job</th><th>Company</th><th>Applicant</th><th>Status</th><th>Score</th><th>Date</th><th>Action</th></tr>
+  <tr><th>Job</th><th>Company</th><th>Applicant</th><th>Resume</th><th>Status</th><th>Score</th><th>Date</th><th>Action</th></tr>
   {% for a in applications %}
   <tr>
     <td><a href="/jobs/{{ a.job.id }}" style="color:#58a6ff;text-decoration:none">{{ a.job.title }}</a></td>
     <td>{{ a.job.company.name if a.job.company else '—' }}</td>
     <td><a href="/profile/{{ a.applicant.id }}" style="color:#58a6ff;text-decoration:none">{{ a.applicant.name }}</a></td>
+    <td>{% if a.resume_data %}<a href="/applications/{{ a.id }}/resume/download" style="color:#3fb950;text-decoration:none;font-size:12px" title="{{ a.resume_filename }}">📄 Resume</a>{% else %}<span style="color:#484f58;font-size:12px">—</span>{% endif %}</td>
     <td><span class="badge {{ a.status }}">{{ a.status }}</span></td>
     <td>{{ a.score|int }}%</td>
     <td>{{ a.created_at.strftime('%b %d') }}</td>

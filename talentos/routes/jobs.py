@@ -148,6 +148,8 @@ def delete_job(id):
     return redirect(url_for("jobs.list_jobs"))
 
 
+import base64
+
 @bp.route("/<int:id>/apply", methods=["POST"])
 @login_required
 def apply_job(id):
@@ -160,8 +162,22 @@ def apply_job(id):
         flash("You have already applied to this job.", "info")
         return redirect(url_for("jobs.job_detail", id=job.id))
 
+    cover_letter = request.form.get("cover_letter", "").strip()
+    resume_data = ""
+    resume_filename = ""
+    resume_mime = ""
+    if "resume" in request.files:
+        f = request.files["resume"]
+        if f.filename:
+            resume_data = base64.b64encode(f.read()).decode()
+            resume_filename = f.filename
+            resume_mime = f.content_type or "application/octet-stream"
+
     application = Application(
-        job_id=job.id, user_id=current_user.id
+        job_id=job.id, user_id=current_user.id,
+        cover_letter=cover_letter if cover_letter else None,
+        resume_data=resume_data, resume_filename=resume_filename,
+        resume_mime=resume_mime,
     )
     db.session.add(application)
     db.session.commit()

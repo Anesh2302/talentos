@@ -24,6 +24,22 @@
 </div>
 {% endif %}
 
+<div class="card">
+  <h3>Resume</h3>
+  {% if application.resume_data %}
+  <p style="color:#8b949e;font-size:13px">Uploaded: {{ application.resume_filename or 'resume' }}</p>
+  <a href="/applications/{{ application.id }}/resume/download" class="btn btn-secondary" style="margin-top:8px">Download Resume</a>
+  {% else %}
+  <p style="color:#484f58;font-size:13px">No resume uploaded</p>
+  {% endif %}
+  {% if current_user.id == application.user_id or current_user.role in ('admin','recruiter') %}
+  <form method="POST" action="/applications/{{ application.id }}/resume" enctype="multipart/form-data" style="margin-top:12px;display:flex;gap:10px;align-items:center">
+    <input type="file" name="resume" accept=".pdf,.doc,.docx,.txt" style="flex:1;margin:0;padding:8px">
+    <button type="submit" class="btn btn-secondary" style="white-space:nowrap">Upload</button>
+  </form>
+  {% endif %}
+</div>
+
 {% if current_user.role in ('admin','recruiter') %}
 <div class="card">
   <h3>ATS Actions</h3>
