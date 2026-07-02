@@ -7,29 +7,26 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes glow { 0%, 100% { box-shadow: 0 0 5px rgba(88,166,255,0.2); } 50% { box-shadow: 0 0 25px rgba(88,166,255,0.4); } }
     @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     @keyframes spin { to { transform: rotate(360deg); } }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: #c9d1d9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
     .card { background: linear-gradient(135deg, #161b22 0%, #1c2128 100%); border: 1px solid #30363d; border-radius: 16px; padding: 48px 40px; width: 400px; animation: fadeIn 0.6s ease-out; position: relative; overflow: hidden; }
     .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #58a6ff, #f0883e, #3fb950); }
-    h1 { color: #58a6ff; text-align: center; margin-bottom: 4px; font-size: 28px; text-shadow: 0 0 30px rgba(88,166,255,0.15); letter-spacing: 1px; }
+    h1 { color: #58a6ff; text-align: center; margin-bottom: 4px; font-size: 28px; }
     h1::before { content: "◆ "; font-size: 18px; color: #f0883e; }
     .subtitle { text-align: center; color: #8b949e; font-size: 14px; margin-bottom: 32px; }
     label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; font-weight: 600; }
     input { width: 100%; padding: 12px 14px; background: #0d1117; border: 2px solid #30363d; border-radius: 10px; color: #c9d1d9; font-size: 14px; margin-bottom: 20px; outline: none; transition: all 0.25s ease; }
-    input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); background: #161b22; }
-    button { width: 100%; padding: 12px; background: linear-gradient(135deg, #238636, #2ea043); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 10px rgba(35,134,54,0.3); letter-spacing: 0.5px; }
-    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(35,134,54,0.4); }
-    button:active { transform: translateY(0); }
-    .error { background: linear-gradient(135deg, #3a1c1c, #4a1c1c); color: #f85149; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: none; border: 1px solid #6a2d2d; animation: fadeIn 0.3s ease-out; }
+    input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); }
+    button { width: 100%; padding: 12px; background: linear-gradient(135deg, #238636, #2ea043); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.25s ease; }
+    button:hover { transform: translateY(-2px); }
+    .error { background: linear-gradient(135deg, #3a1c1c, #4a1c1c); color: #f85149; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: none; border: 1px solid #6a2d2d; }
     .loading { display: none; text-align: center; color: #8b949e; font-size: 13px; margin-top: 12px; }
     .loading::before { content: ""; display: inline-block; width: 18px; height: 18px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
     .link { text-align: center; margin-top: 20px; font-size: 13px; }
-    .link a { color: #58a6ff; text-decoration: none; transition: color 0.2s; }
+    .link a { color: #58a6ff; text-decoration: none; }
     .link a:hover { color: #f0883e; text-decoration: underline; }
     .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #484f58; }
-    .success-msg { background: linear-gradient(135deg, #1c3a1f, #1c4a1f); color: #3fb950; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; border: 1px solid #2d6a30; animation: fadeIn 0.3s ease-out; display: none; }
   </style>
 </head>
 <body>
@@ -53,29 +50,14 @@
   <div class="footer">Talentos v1.0</div>
 </div>
 
-<div id="faceModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;align-items:center;justify-content:center">
-  <div class="card" style="width:420px;text-align:center;animation:fadeIn 0.3s ease-out">
-    <h3 style="margin-bottom:16px">Face Login</h3>
-    <input type="email" id="faceEmail" placeholder="Enter your email" style="margin-bottom:12px">
-    <video id="faceVideo" width="320" height="240" autoplay muted style="border-radius:8px;background:#000;width:100%;max-width:320px;margin:0 auto 12px"></video>
-    <div id="faceStatus" style="font-size:13px;color:#8b949e;margin-bottom:12px">Loading camera...</div>
-    <div style="display:flex;gap:8px;justify-content:center">
-      <button id="faceVerifyBtn" class="btn btn-primary" disabled>Verify Face</button>
-      <button id="faceCloseBtn" class="btn btn-secondary">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
 <script>
 function togglePassword() {
   const pw = document.getElementById('password');
   const btn = document.getElementById('togglePw');
-  if (pw.type === 'password') { pw.type = 'text'; btn.textContent = 'HIDE'; }
-  else { pw.type = 'password'; btn.textContent = 'SHOW'; }
+  pw.type = pw.type === 'password' ? 'text' : 'password';
+  btn.textContent = pw.type === 'password' ? 'SHOW' : 'HIDE';
 }
 
-let faceModelsLoaded = false;
 let loginEmail = '';
 let loginPassword = '';
 let faceToken = '';
@@ -119,205 +101,109 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
   }
 });
 
-// OTP dialog
 function showOtpDialog(email, password) {
-  const otpDiv = document.createElement('div');
-  otpDiv.id = 'otpDialog';
-  otpDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center';
-  otpDiv.innerHTML = `
-    <div class="card" style="width:360px;text-align:center;animation:fadeIn 0.3s ease-out">
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div class="card" style="width:360px;text-align:center;">
       <h3 style="margin-bottom:8px">OTP Required</h3>
       <p style="color:#8b949e;font-size:13px;margin-bottom:20px">A code was sent to your email</p>
       <input type="text" id="otpInput" placeholder="Enter OTP code" style="text-align:center;font-size:20px;letter-spacing:4px">
       <div id="otpError" style="color:#f85149;font-size:12px;margin-bottom:12px;display:none"></div>
       <div style="display:flex;gap:8px;justify-content:center">
-        <button id="otpSubmitBtn" class="btn btn-primary">Verify OTP</button>
-        <button id="otpCancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="otpSubmitBtn" class="btn" style="padding:10px 24px;background:linear-gradient(135deg,#238636,#2ea043);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Verify OTP</button>
+        <button id="otpCancelBtn" class="btn" style="padding:10px 24px;background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:8px;cursor:pointer">Cancel</button>
       </div>
     </div>`;
-  document.body.appendChild(otpDiv);
+  document.body.appendChild(overlay);
   document.getElementById('otpInput').focus();
-  document.getElementById('otpSubmitBtn').addEventListener('click', async function() {
+  document.getElementById('otpSubmitBtn').onclick = async function() {
     const otp = document.getElementById('otpInput').value.trim();
     if (!otp) return;
-    this.disabled = true;
-    this.textContent = 'Verifying...';
+    this.disabled = true; this.textContent = 'Verifying...';
     try {
-      const res = await fetch('/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, otp })
-      });
+      const res = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password,otp}) });
       const data = await res.json();
-      if (res.ok) {
-        window.location.href = '/dashboard';
-      } else if (data.face_required) {
-        faceToken = data.face_token;
-        otpDiv.remove();
-        showFaceStep(email, data.face_token);
-      } else {
-        document.getElementById('otpError').textContent = data.error || 'Invalid OTP';
-        document.getElementById('otpError').style.display = 'block';
-        this.disabled = false;
-        this.textContent = 'Verify OTP';
-      }
-    } catch (err) {
-      document.getElementById('otpError').textContent = 'Network error';
-      document.getElementById('otpError').style.display = 'block';
-      this.disabled = false;
-      this.textContent = 'Verify OTP';
-    }
-  });
-  document.getElementById('otpCancelBtn').addEventListener('click', () => otpDiv.remove());
+      if (res.ok) { window.location.href = '/dashboard'; }
+      else if (data.face_required) { faceToken = data.face_token; overlay.remove(); showFaceStep(email, data.face_token); }
+      else { document.getElementById('otpError').textContent = data.error || 'Invalid OTP'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
+    } catch(err) { document.getElementById('otpError').textContent = 'Network error'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
+  };
+  document.getElementById('otpCancelBtn').onclick = () => overlay.remove();
 }
+</script>
 
-// Face step after OTP / password
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
+<script>
+// Face verification step (after OTP, before final login)
 function showFaceStep(email, token) {
-  const faceDiv = document.createElement('div');
-  faceDiv.id = 'faceStepDialog';
-  faceDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center';
-  faceDiv.innerHTML = `
-    <div class="card" style="width:400px;text-align:center;animation:fadeIn 0.3s ease-out">
-      <h3 style="margin-bottom:8px">Face Verification Required</h3>
+  const overlay = document.createElement('div');
+  overlay.id = 'faceStep';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div class="card" style="width:420px;text-align:center;">
+      <h3 style="margin-bottom:8px">Face Verification</h3>
       <p style="color:#8b949e;font-size:13px;margin-bottom:16px">Look at the camera to complete login</p>
-      <video id="faceStepVideo" width="320" height="240" autoplay muted style="border-radius:8px;background:#000;width:100%;max-width:320px;margin:0 auto 12px"></video>
-      <div id="faceStepStatus" style="font-size:13px;color:#8b949e;margin-bottom:12px">Loading camera...</div>
-      <div style="display:flex;gap:8px;justify-content:center">
-        <button id="faceStepVerifyBtn" class="btn btn-primary" disabled>Verify Face</button>
-        <button id="faceStepCancelBtn" class="btn btn-secondary">Cancel</button>
+      <video id="faceStepVideo" width="320" height="240" autoplay muted playsinline style="border-radius:8px;background:#000;width:100%;max-width:320px;margin:0 auto 12px"></video>
+      <div id="faceStepStatus" style="font-size:13px;color:#8b949e;margin-bottom:12px">Starting camera...</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button id="faceStepVerifyBtn" class="btn" style="padding:10px 24px;background:linear-gradient(135deg,#238636,#2ea043);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600" disabled>Verify Face</button>
+        <button id="faceStepSkipBtn" class="btn" style="padding:10px 24px;background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:8px;cursor:pointer">Skip (use password)</button>
+        <button id="faceStepCancelBtn" class="btn" style="padding:10px 24px;background:#3a1c1c;color:#f85149;border:1px solid #6a2d2d;border-radius:8px;cursor:pointer">Cancel</button>
       </div>
     </div>`;
-  document.body.appendChild(faceDiv);
-  startFaceStepCamera(email, token);
-  document.getElementById('faceStepCancelBtn').addEventListener('click', () => { stopFaceStepCamera(); faceDiv.remove(); });
-}
-
-let faceStepStream = null;
-async function startFaceStepCamera(email, token) {
-  try {
-    faceStepStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+  document.body.appendChild(overlay);
+  let stream = null;
+  let modelsLoaded = false;
+  async function startCam() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:240, facingMode:'user' } });
+      const video = document.getElementById('faceStepVideo');
+      video.srcObject = stream;
+      await video.play();
+      document.getElementById('faceStepStatus').textContent = 'Loading face model...';
+      try {
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        modelsLoaded = true;
+        document.getElementById('faceStepVerifyBtn').disabled = false;
+        document.getElementById('faceStepStatus').textContent = 'Look at the camera and click Verify';
+      } catch(e) {
+        document.getElementById('faceStepStatus').innerHTML = '<span style="color:#f0883e">Model load failed. You can skip face step.</span>';
+      }
+    } catch(e) {
+      document.getElementById('faceStepStatus').innerHTML = '<span style="color:#f85149">Camera error: ' + e.message + '</span>';
+    }
+  }
+  startCam();
+  document.getElementById('faceStepVerifyBtn').onclick = async function() {
+    if (!modelsLoaded) return;
     const video = document.getElementById('faceStepVideo');
-    video.srcObject = faceStepStream;
-    await video.play();
-    document.getElementById('faceStepStatus').textContent = 'Loading face model...';
-    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    document.getElementById('faceStepVerifyBtn').disabled = false;
-    document.getElementById('faceStepStatus').textContent = 'Look at the camera and click Verify';
-    document.getElementById('faceStepVerifyBtn').onclick = () => verifyFaceStep(email, token);
-  } catch (err) {
-    document.getElementById('faceStepStatus').innerHTML = '<span style="color:#f85149">Camera error: ' + err.message + '</span>';
-  }
+    const status = document.getElementById('faceStepStatus');
+    this.disabled = true; status.textContent = 'Verifying...';
+    try {
+      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize:320 })).withFaceLandmarks().withFaceDescriptor();
+      if (!detection) { status.innerHTML = '<span style="color:#f85149">No face detected. Try again.</span>'; this.disabled = false; return; }
+      const res = await fetch('/auth/face/complete-login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, face_token:token, descriptor:Array.from(detection.descriptor)}) });
+      const data = await res.json();
+      if (res.ok) { status.innerHTML = '<span style="color:#3fb950">✓ Login successful! Redirecting...</span>'; if(stream) stream.getTracks().forEach(t=>t.stop()); setTimeout(()=>window.location.href='/dashboard', 500); }
+      else { status.innerHTML = '<span style="color:#f85149">' + (data.error||'Face not recognized') + '</span>'; this.disabled = false; }
+    } catch(e) { status.innerHTML = '<span style="color:#f85149">Error: ' + e.message + '</span>'; this.disabled = false; }
+  };
+  document.getElementById('faceStepSkipBtn').onclick = async function() {
+    const status = document.getElementById('faceStepStatus');
+    status.textContent = 'Logging in with password...';
+    try {
+      const res = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:loginEmail, password:loginPassword, skip_face:true}) });
+      const data = await res.json();
+      if (res.ok) { if(stream) stream.getTracks().forEach(t=>t.stop()); window.location.href = '/dashboard'; }
+      else { status.innerHTML = '<span style="color:#f85149">' + (data.error||'Login failed') + '</span>'; }
+    } catch(e) { status.innerHTML = '<span style="color:#f85149">Error: ' + e.message + '</span>'; }
+  };
+  document.getElementById('faceStepCancelBtn').onclick = () => { if(stream) stream.getTracks().forEach(t=>t.stop()); overlay.remove(); };
 }
-
-function stopFaceStepCamera() {
-  if (faceStepStream) { faceStepStream.getTracks().forEach(t => t.stop()); faceStepStream = null; }
-}
-
-async function verifyFaceStep(email, token) {
-  const video = document.getElementById('faceStepVideo');
-  const status = document.getElementById('faceStepStatus');
-  const btn = document.getElementById('faceStepVerifyBtn');
-  btn.disabled = true;
-  status.textContent = 'Verifying face...';
-  try {
-    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceDescriptor();
-    if (!detection) { status.innerHTML = '<span style="color:#f85149">No face detected</span>'; btn.disabled = false; return; }
-    const res = await fetch('/auth/face/complete-login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, face_token: token, descriptor: Array.from(detection.descriptor) })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      status.innerHTML = '<span style="color:#3fb950">✓ Login successful! Redirecting...</span>';
-      stopFaceStepCamera();
-      setTimeout(() => window.location.href = '/dashboard', 500);
-    } else {
-      status.innerHTML = '<span style="color:#f85149">' + (data.error || 'Face not recognized') + '</span>';
-      btn.disabled = false;
-    }
-  } catch (err) {
-    status.innerHTML = '<span style="color:#f85149">Error: ' + err.message + '</span>';
-    btn.disabled = false;
-  }
-}
-
-// Face login modal (for direct face login from login page)
-document.getElementById('faceLoginLink').addEventListener('click', function(e) {
-  e.preventDefault();
-  document.getElementById('faceModal').style.display = 'flex';
-  startFaceCamera();
-});
-
-document.getElementById('faceCloseBtn').addEventListener('click', function() {
-  stopFaceCamera();
-  document.getElementById('faceModal').style.display = 'none';
-});
-
-let faceStream = null;
-async function startFaceCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
-    faceStream = stream;
-    const video = document.getElementById('faceVideo');
-    video.srcObject = stream;
-    await video.play();
-    document.getElementById('faceStatus').textContent = 'Loading face model...';
-    await loadFaceModels();
-  } catch (err) {
-    document.getElementById('faceStatus').textContent = 'Camera error: ' + err.message;
-  }
-}
-
-function stopFaceCamera() {
-  if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
-}
-
-async function loadFaceModels() {
-  if (faceModelsLoaded) { document.getElementById('faceVerifyBtn').disabled = false; document.getElementById('faceStatus').textContent = 'Look at the camera and click Verify'; return; }
-  try {
-    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    faceModelsLoaded = true;
-    document.getElementById('faceVerifyBtn').disabled = false;
-    document.getElementById('faceStatus').textContent = 'Look at the camera and click Verify';
-  } catch (err) {
-    document.getElementById('faceStatus').textContent = 'Model load failed: ' + err.message;
-  }
-}
-
-document.getElementById('faceVerifyBtn').addEventListener('click', async function() {
-  const email = document.getElementById('faceEmail').value.trim();
-  if (!email) { document.getElementById('faceStatus').textContent = 'Please enter your email first.'; return; }
-  const video = document.getElementById('faceVideo');
-  const status = document.getElementById('faceStatus');
-  this.disabled = true;
-  status.textContent = 'Verifying face...';
-  try {
-    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceDescriptor();
-    if (!detection) { status.textContent = 'No face detected. Try again.'; this.disabled = false; return; }
-    const descriptor = Array.from(detection.descriptor);
-    const res = await fetch('/auth/face/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, descriptor })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      status.innerHTML = '<span style="color:#3fb950">✓ Face matched! Logging in...</span>';
-      setTimeout(() => { window.location.href = '/dashboard'; }, 500);
-    } else {
-      status.innerHTML = '<span style="color:#f85149">' + (data.error || 'Face not recognized') + '</span>';
-      this.disabled = false;
-    }
-  } catch (err) {
-    status.innerHTML = '<span style="color:#f85149">Error: ' + err.message + '</span>';
-    this.disabled = false;
-  }
-});
 </script>
 </body>
 </html>

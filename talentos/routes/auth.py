@@ -112,7 +112,7 @@ def login():
 
     user.login_attempts = 0
 
-    if user.face_descriptor:
+    if user.face_descriptor and not data.get("skip_face"):
         user.face_login_token = generate_session_token()
         db.session.commit()
         return jsonify({

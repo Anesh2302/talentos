@@ -6,28 +6,30 @@
   <title>TalentOS — Face Login</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: #c9d1d9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .card { background: linear-gradient(135deg, #161b22 0%, #1c2128 100%); border: 1px solid #30363d; border-radius: 16px; padding: 48px 40px; width: 440px; animation: fadeIn 0.6s ease-out; position: relative; overflow: hidden; text-align:center; }
-    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #58a6ff, #f0883e, #3fb950); }
-    h1 { color: #58a6ff; margin-bottom: 4px; font-size: 22px; }
-    .subtitle { color: #8b949e; font-size: 14px; margin-bottom: 24px; }
-    video { border-radius: 12px; background: #000; width: 100%; max-width: 320px; margin: 0 auto 16px; }
-    input { width: 100%; padding: 12px 14px; background: #0d1117; border: 2px solid #30363d; border-radius: 10px; color: #c9d1d9; font-size: 14px; margin-bottom: 16px; outline: none; transition: all 0.25s ease; }
-    input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); }
-    .btn { padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.25s ease; display: inline-block; }
-    .btn-primary { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; box-shadow: 0 2px 10px rgba(35,134,54,0.3); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(35,134,54,0.4); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .btn-secondary { background: linear-gradient(135deg, #21262d, #30363d); color: #c9d1d9; border: 1px solid #30363d; }
-    .btn-secondary:hover { transform: translateY(-2px); border-color: #58a6ff; }
-    .status { font-size: 13px; color: #8b949e; margin: 12px 0; }
-    .footer { margin-top: 24px; font-size: 12px; color: #484f58; }
-    .link { margin-top: 16px; font-size: 13px; }
-    .link a { color: #58a6ff; text-decoration: none; }
-    .link a:hover { color: #f0883e; }
-    .loading::before { content: ""; display: inline-block; width: 18px; height: 18px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    body { font-family:'Segoe UI',Arial,sans-serif; background:linear-gradient(135deg,#0d1117 0%,#161b22 50%,#0d1117 100%); color:#c9d1d9; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .card { background:linear-gradient(135deg,#161b22 0%,#1c2128 100%); border:1px solid #30363d; border-radius:16px; padding:48px 40px; width:440px; animation:fadeIn 0.6s ease-out; position:relative; overflow:hidden; text-align:center; }
+    .card::before { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#58a6ff,#f0883e,#3fb950); }
+    h1 { color:#58a6ff; margin-bottom:4px; font-size:22px; }
+    .subtitle { color:#8b949e; font-size:14px; margin-bottom:24px; }
+    video { border-radius:12px; background:#000; width:100%; max-width:320px; margin:0 auto 16px; }
+    input { width:100%; padding:12px 14px; background:#0d1117; border:2px solid #30363d; border-radius:10px; color:#c9d1d9; font-size:14px; margin-bottom:16px; outline:none; }
+    input:focus { border-color:#58a6ff; box-shadow:0 0 0 3px rgba(88,166,255,0.15); }
+    .btn { padding:10px 24px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; display:inline-block; }
+    .btn-primary { background:linear-gradient(135deg,#238636,#2ea043); color:#fff; }
+    .btn-primary:hover { transform:translateY(-2px); }
+    .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .btn-secondary { background:#21262d; color:#c9d1d9; border:1px solid #30363d; }
+    .btn-secondary:hover { border-color:#58a6ff; }
+    .status { font-size:13px; color:#8b949e; margin:12px 0; }
+    .footer { margin-top:24px; font-size:12px; color:#484f58; }
+    .link { margin-top:16px; font-size:13px; }
+    .link a { color:#58a6ff; text-decoration:none; }
+    .link a:hover { color:#f0883e; }
+    .loading::before { content:""; display:inline-block; width:16px; height:16px; border:2px solid #30363d; border-top-color:#58a6ff; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px; vertical-align:middle; }
+    .error { color:#f85149; font-size:13px; margin:8px 0; display:none; }
+    .success { color:#3fb950; font-size:13px; margin:8px 0; }
   </style>
 </head>
 <body>
@@ -35,54 +37,64 @@
   <h1>Face Login</h1>
   <p class="subtitle">Sign in with your face</p>
   <input type="email" id="email" placeholder="Enter your email address" autofocus>
-  <video id="video" width="320" height="240" autoplay muted></video>
-  <div class="status" id="status">Loading camera...</div>
-  <div style="display:flex;gap:8px;justify-content:center">
+  <video id="video" width="320" height="240" autoplay muted playsinline></video>
+  <div class="status" id="status">Starting camera...</div>
+  <div class="error" id="error"></div>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
     <button id="verifyBtn" class="btn btn-primary" disabled>Verify Face</button>
     <a href="/auth/login" class="btn btn-secondary">Back</a>
   </div>
   <div class="link"><a href="/auth/login">Sign in with password instead</a></div>
   <div class="footer">TalentOS v1.0</div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
 <script>
 let stream = null;
+let modelsLoaded = false;
+
 async function init() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:240, facingMode:'user' } });
     const video = document.getElementById('video');
     video.srcObject = stream;
     await video.play();
     document.getElementById('status').textContent = 'Loading face model...';
-    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    document.getElementById('verifyBtn').disabled = false;
-    document.getElementById('status').textContent = 'Look at the camera and click Verify';
-  } catch (err) {
-    document.getElementById('status').innerHTML = '<span style="color:#f85149">Error: ' + err.message + '</span>';
+    try {
+      const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      modelsLoaded = true;
+      document.getElementById('verifyBtn').disabled = false;
+      document.getElementById('status').textContent = 'Look at the camera and click Verify';
+    } catch(e) {
+      document.getElementById('status').innerHTML = '<span style="color:#f0883e">Face model failed to load. Try password login instead.</span>';
+    }
+  } catch(e) {
+    document.getElementById('status').innerHTML = '<span style="color:#f85149">Camera access denied: ' + e.message + '</span>';
   }
 }
+
 document.getElementById('verifyBtn').addEventListener('click', async function() {
   const email = document.getElementById('email').value.trim();
   if (!email) { document.getElementById('status').textContent = 'Enter your email first.'; return; }
-  const video = document.getElementById('video');
+  if (!modelsLoaded) { document.getElementById('status').textContent = 'Models not loaded yet.'; return; }
   const status = document.getElementById('status');
-  this.disabled = true;
-  status.textContent = 'Verifying...';
+  const error = document.getElementById('error');
+  this.disabled = true; error.style.display = 'none';
+  status.textContent = 'Verifying face...';
   try {
-    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceDescriptor();
-    if (!detection) { status.innerHTML = '<span style="color:#f85149">No face detected</span>'; this.disabled = false; return; }
-    const res = await fetch('/auth/face/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, descriptor: Array.from(detection.descriptor) })
-    });
+    const video = document.getElementById('video');
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize:320 })).withFaceLandmarks().withFaceDescriptor();
+    if (!detection) { status.innerHTML = '<span style="color:#f85149">No face detected. Try again.</span>'; this.disabled = false; return; }
+    const res = await fetch('/auth/face/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, descriptor:Array.from(detection.descriptor)}) });
     const data = await res.json();
-    if (res.ok) { status.innerHTML = '<span style="color:#3fb950">Face matched! Logging in...</span>'; setTimeout(() => window.location.href='/dashboard', 500); }
-    else { status.innerHTML = '<span style="color:#f85149">' + (data.error || 'Not recognized') + '</span>'; this.disabled = false; }
-  } catch (err) { status.innerHTML = '<span style="color:#f85149">Error: ' + err.message + '</span>'; this.disabled = false; }
+    if (res.ok) { status.innerHTML = '<span class="success">Face matched! Logging in...</span>'; setTimeout(()=>window.location.href='/dashboard', 500); }
+    else { error.textContent = data.error || 'Face not recognized'; error.style.display = 'block'; status.innerHTML = 'Try again'; this.disabled = false; }
+  } catch(e) { status.innerHTML = '<span style="color:#f85149">Error: ' + e.message + '</span>'; this.disabled = false; }
 });
+
 init();
 </script>
 </body>
