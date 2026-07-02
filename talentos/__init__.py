@@ -16,22 +16,6 @@ def create_app():
     login_manager.init_app(app)
     mail.init_app(app)
 
-    @app.errorhandler(500)
-    def handle_500(e):
-        import traceback, sys
-        print("=== 500 ERROR ===", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
-        print("=== END ===", file=sys.stderr)
-        return {"error": "Internal server error"}, 500
-
-    @app.before_request
-    def log_request():
-        import sys
-        if request.method == "POST":
-            ct = request.content_type or "none"
-            cl = request.content_length or -1
-            print(f">>> {request.method} {request.path} ct={ct} cl={cl}", file=sys.stderr)
-
     login_manager.login_view = "auth.login"
 
     from .routes import auth, main, admin, company, jobs, messages, applications, profile

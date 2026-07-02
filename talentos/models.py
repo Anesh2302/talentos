@@ -43,7 +43,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     company = db.relationship("Company", foreign_keys=[company_id], lazy=True)
-    skills = db.relationship("UserSkill", backref="user", lazy=True)
+    skills = db.relationship("UserSkill", lazy=True)
 
     def get_id(self):
         return f"{self.id}:{self.session_token}"
@@ -228,7 +228,7 @@ class ConversationParticipant(db.Model):
     conversation_id = db.Column(db.Integer, db.ForeignKey("conversation.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
-    conversation = db.relationship("Conversation", backref="participants", lazy=True)
+    conversation = db.relationship("Conversation", lazy=True)
     user = db.relationship("User", lazy=True)
 
 
