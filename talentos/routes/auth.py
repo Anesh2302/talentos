@@ -34,7 +34,9 @@ def register():
 
 @bp.route("/verify-email", methods=["POST"])
 def verify_email():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
+    if not data or "user_id" not in data or "code" not in data:
+        return jsonify({"error": "Invalid request"}), 400
     user = User.query.get(data["user_id"])
     if not user:
         return jsonify({"error": "User not found"}), 404
@@ -121,7 +123,7 @@ def logout():
 @bp.route("/setup-otp", methods=["POST"])
 @login_required
 def setup_otp():
-    data = request.get_json() or {}
+    data = request.get_json(force=True, silent=True) or {}
     if data.get("password") and not current_user.check_password(data["password"]):
         return jsonify({"error": "Invalid password"}), 401
     current_user.otp_enabled = True
@@ -133,7 +135,7 @@ def setup_otp():
 @bp.route("/disable-otp", methods=["POST"])
 @login_required
 def disable_otp():
-    data = request.get_json() or {}
+    data = request.get_json(force=True, silent=True) or {}
     if not data.get("password") or not current_user.check_password(data["password"]):
         return jsonify({"error": "Invalid password"}), 401
     current_user.otp_enabled = False
@@ -143,7 +145,7 @@ def disable_otp():
 
 @bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True) or {}
     user = User.query.filter_by(email=data.get("email", "")).first()
     if not user:
         return jsonify({"message": "If that email exists, a reset link has been sent."})
@@ -164,7 +166,7 @@ def forgot_password():
 
 @bp.route("/reset-password", methods=["POST"])
 def reset_password():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True) or {}
     reset = PasswordResetToken.query.filter_by(token=data.get("token", ""), used=False).first()
     if not reset or reset.is_expired():
         return jsonify({"error": "Invalid or expired reset token"}), 400
@@ -179,7 +181,7 @@ def reset_password():
 @bp.route("/change-email", methods=["POST"])
 @login_required
 def change_email():
-    data = request.get_json() or {}
+    data = request.get_json(force=True, silent=True) or {}
     if not data.get("password") or not current_user.check_password(data["password"]):
         return jsonify({"error": "Invalid password"}), 401
 
@@ -212,7 +214,7 @@ def my_login_history():
 @bp.route("/generate-backup-codes", methods=["POST"])
 @login_required
 def generate_backup_codes():
-    data = request.get_json() or {}
+    data = request.get_json(force=True, silent=True) or {}
     if not data.get("password") or not current_user.check_password(data["password"]):
         return jsonify({"error": "Invalid password"}), 401
 

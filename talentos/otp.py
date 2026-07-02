@@ -63,7 +63,11 @@ def send_otp_email(recipient, otp_code):
 
 
 def send_reset_email(recipient, token):
-    reset_url = f"http://localhost:5000/reset-password?token={token}"
+    from flask import request as flask_request
+    host = flask_request.host_url.rstrip("/") if flask_request else ""
+    if not host or "localhost" in host:
+        host = "https://talentos-simonpetercys-4786s-projects.vercel.app"
+    reset_url = f"{host}/reset-password?token={token}"
     msg = Message(
         "Talentos — Password Reset",
         recipients=[recipient],

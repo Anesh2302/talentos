@@ -165,7 +165,7 @@ def todos_today():
 @bp.route("/todos", methods=["POST"])
 @admin_required
 def create_todo():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
     if not data or not data.get("title"):
         return jsonify({"error": "Title is required"}), 400
 
@@ -195,7 +195,9 @@ def create_todo():
 @admin_required
 def update_todo(todo_id):
     todo = Todo.query.get_or_404(todo_id)
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({"error": "Invalid request"}), 400
 
     for field in ("title", "description", "status", "priority",
                    "scheduled_time", "assigned_to", "reminder_sent"):
