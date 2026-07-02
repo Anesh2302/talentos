@@ -1,0 +1,9 @@
+# talentos - Recruitment & Talent Management Platform
+flask>=3.0
+flask-login>=0.6
+flask-sqlalchemy>=3.0
+flask-mail>=0.9
+pyotp>=2.8
+qrcode[pil]>=7.4
+python-dotenv>=1.0
+gunicorn>=21.2
