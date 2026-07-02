@@ -110,6 +110,16 @@ def login():
             return jsonify({"error": "Invalid OTP"}), 401
 
     user.login_attempts = 0
+
+    if user.face_descriptor:
+        user.face_login_token = generate_session_token()
+        db.session.commit()
+        return jsonify({
+            "face_required": True,
+            "face_token": user.face_login_token,
+            "message": "Face verification required"
+        })
+
     user.session_token = generate_session_token()
     db.session.commit()
     _record_login(user.email, True, user.id)
@@ -283,6 +293,28 @@ def face_verify():
     if match:
         return jsonify({"match": True, "score": round(score, 3), "user_id": user.id, "name": user.name})
     return jsonify({"match": False, "score": round(score, 3)})
+
+
+@bp.route("/face/complete-login", methods=["POST"])
+def face_complete_login():
+    data = request.get_json(force=True, silent=True)
+    if not data or "descriptor" not in data or "email" not in data or "face_token" not in data:
+        return jsonify({"error": "Missing face data, email, or token"}), 400
+    user = User.query.filter_by(email=data["email"].strip()).first()
+    if not user or not user.face_descriptor:
+        return jsonify({"error": "No face registered"}), 401
+    if user.face_login_token != data["face_token"]:
+        return jsonify({"error": "Invalid or expired face token"}), 401
+    stored = json.loads(user.face_descriptor)
+    score = cosine_similarity(data["descriptor"], stored)
+    if score < 0.5:
+        return jsonify({"match": False, "error": "Face does not match", "score": round(score, 3)}), 401
+    user.face_login_token = ""
+    user.session_token = generate_session_token()
+    db.session.commit()
+    _record_login(user.email, True, user.id)
+    login_user(user)
+    return jsonify({"match": True, "message": "Login successful", "user": user.name})
 
 
 @bp.route("/face/login", methods=["POST"])

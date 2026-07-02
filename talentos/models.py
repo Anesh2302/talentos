@@ -36,6 +36,7 @@ class User(UserMixin, db.Model):
     is_verified = db.Column(db.Boolean, default=False)
     face_descriptor = db.Column(db.Text, default="")
     face_image = db.Column(db.Text, default="")
+    face_login_token = db.Column(db.String(64), default="")
     login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
     session_token = db.Column(db.String(64), default="")

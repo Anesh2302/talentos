@@ -66,11 +66,16 @@
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
 <script>
 let faceModelsLoaded = false;
+let loginEmail = '';
+let loginPassword = '';
+let faceToken = '';
 
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
+  loginEmail = email;
+  loginPassword = password;
   const errorEl = document.getElementById('error');
   const loadingEl = document.getElementById('loading');
   errorEl.style.display = 'none';
@@ -85,19 +90,150 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     if (res.ok) {
       const params = new URLSearchParams(window.location.search);
       window.location.href = params.get('next') || '/dashboard';
+    } else if (data.otp_required) {
+      loadingEl.style.display = 'none';
+      showOtpDialog(email, password);
+    } else if (data.face_required) {
+      loadingEl.style.display = 'none';
+      faceToken = data.face_token;
+      showFaceStep(email, data.face_token);
     } else {
       errorEl.textContent = data.error || data.message || 'Login failed';
       errorEl.style.display = 'block';
+      loadingEl.style.display = 'none';
     }
   } catch (err) {
     errorEl.textContent = 'Network error. Please try again.';
     errorEl.style.display = 'block';
-  } finally {
     loadingEl.style.display = 'none';
   }
 });
 
-// Face login modal
+// OTP dialog
+function showOtpDialog(email, password) {
+  const otpDiv = document.createElement('div');
+  otpDiv.id = 'otpDialog';
+  otpDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center';
+  otpDiv.innerHTML = `
+    <div class="card" style="width:360px;text-align:center;animation:fadeIn 0.3s ease-out">
+      <h3 style="margin-bottom:8px">OTP Required</h3>
+      <p style="color:#8b949e;font-size:13px;margin-bottom:20px">A code was sent to your email</p>
+      <input type="text" id="otpInput" placeholder="Enter OTP code" style="text-align:center;font-size:20px;letter-spacing:4px">
+      <div id="otpError" style="color:#f85149;font-size:12px;margin-bottom:12px;display:none"></div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="otpSubmitBtn" class="btn btn-primary">Verify OTP</button>
+        <button id="otpCancelBtn" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(otpDiv);
+  document.getElementById('otpInput').focus();
+  document.getElementById('otpSubmitBtn').addEventListener('click', async function() {
+    const otp = document.getElementById('otpInput').value.trim();
+    if (!otp) return;
+    this.disabled = true;
+    this.textContent = 'Verifying...';
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, otp })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        window.location.href = '/dashboard';
+      } else if (data.face_required) {
+        faceToken = data.face_token;
+        otpDiv.remove();
+        showFaceStep(email, data.face_token);
+      } else {
+        document.getElementById('otpError').textContent = data.error || 'Invalid OTP';
+        document.getElementById('otpError').style.display = 'block';
+        this.disabled = false;
+        this.textContent = 'Verify OTP';
+      }
+    } catch (err) {
+      document.getElementById('otpError').textContent = 'Network error';
+      document.getElementById('otpError').style.display = 'block';
+      this.disabled = false;
+      this.textContent = 'Verify OTP';
+    }
+  });
+  document.getElementById('otpCancelBtn').addEventListener('click', () => otpDiv.remove());
+}
+
+// Face step after OTP / password
+function showFaceStep(email, token) {
+  const faceDiv = document.createElement('div');
+  faceDiv.id = 'faceStepDialog';
+  faceDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center';
+  faceDiv.innerHTML = `
+    <div class="card" style="width:400px;text-align:center;animation:fadeIn 0.3s ease-out">
+      <h3 style="margin-bottom:8px">Face Verification Required</h3>
+      <p style="color:#8b949e;font-size:13px;margin-bottom:16px">Look at the camera to complete login</p>
+      <video id="faceStepVideo" width="320" height="240" autoplay muted style="border-radius:8px;background:#000;width:100%;max-width:320px;margin:0 auto 12px"></video>
+      <div id="faceStepStatus" style="font-size:13px;color:#8b949e;margin-bottom:12px">Loading camera...</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="faceStepVerifyBtn" class="btn btn-primary" disabled>Verify Face</button>
+        <button id="faceStepCancelBtn" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(faceDiv);
+  startFaceStepCamera(email, token);
+  document.getElementById('faceStepCancelBtn').addEventListener('click', () => { stopFaceStepCamera(); faceDiv.remove(); });
+}
+
+let faceStepStream = null;
+async function startFaceStepCamera(email, token) {
+  try {
+    faceStepStream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+    const video = document.getElementById('faceStepVideo');
+    video.srcObject = faceStepStream;
+    await video.play();
+    document.getElementById('faceStepStatus').textContent = 'Loading face model...';
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    document.getElementById('faceStepVerifyBtn').disabled = false;
+    document.getElementById('faceStepStatus').textContent = 'Look at the camera and click Verify';
+    document.getElementById('faceStepVerifyBtn').onclick = () => verifyFaceStep(email, token);
+  } catch (err) {
+    document.getElementById('faceStepStatus').innerHTML = '<span style="color:#f85149">Camera error: ' + err.message + '</span>';
+  }
+}
+
+function stopFaceStepCamera() {
+  if (faceStepStream) { faceStepStream.getTracks().forEach(t => t.stop()); faceStepStream = null; }
+}
+
+async function verifyFaceStep(email, token) {
+  const video = document.getElementById('faceStepVideo');
+  const status = document.getElementById('faceStepStatus');
+  const btn = document.getElementById('faceStepVerifyBtn');
+  btn.disabled = true;
+  status.textContent = 'Verifying face...';
+  try {
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceDescriptor();
+    if (!detection) { status.innerHTML = '<span style="color:#f85149">No face detected</span>'; btn.disabled = false; return; }
+    const res = await fetch('/auth/face/complete-login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, face_token: token, descriptor: Array.from(detection.descriptor) })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      status.innerHTML = '<span style="color:#3fb950">✓ Login successful! Redirecting...</span>';
+      stopFaceStepCamera();
+      setTimeout(() => window.location.href = '/dashboard', 500);
+    } else {
+      status.innerHTML = '<span style="color:#f85149">' + (data.error || 'Face not recognized') + '</span>';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    status.innerHTML = '<span style="color:#f85149">Error: ' + err.message + '</span>';
+    btn.disabled = false;
+  }
+}
+
+// Face login modal (for direct face login from login page)
 document.getElementById('faceLoginLink').addEventListener('click', function(e) {
   e.preventDefault();
   document.getElementById('faceModal').style.display = 'flex';
