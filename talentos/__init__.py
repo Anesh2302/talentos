@@ -1,3 +1,6 @@
+import logging, sys
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, force=True)
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -17,6 +20,21 @@ def create_app():
     mail.init_app(app)
 
     login_manager.login_view = "auth.login"
+
+    @app.before_request
+    def log_request():
+        if request.method == "POST":
+            import logging
+            ct = request.content_type or "none"
+            cl = request.content_length or -1
+            logging.getLogger("app").info(f"POST {request.path} ct={ct} cl={cl}")
+
+    @app.errorhandler(500)
+    def handle_500(e):
+        import traceback, logging
+        tb = traceback.format_exc()
+        logging.getLogger("app").error(f"500 on {request.method} {request.path}:\n{tb}")
+        return {"error": "Internal server error"}, 500
 
     from .routes import auth, main, admin, company, jobs, messages, applications, profile
     app.register_blueprint(auth.bp)

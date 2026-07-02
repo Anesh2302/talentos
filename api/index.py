@@ -20,6 +20,12 @@ if os.environ.get("VERCEL"):
 import logging
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
+import logging, sys
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, force=True)
+
 from talentos import create_app
 
 app = create_app()
+app.logger.handlers = []
+app.logger.addHandler(logging.StreamHandler(sys.stdout))
+app.logger.setLevel(logging.DEBUG)
