@@ -93,7 +93,7 @@ def toggle_follow(user_id):
 def user_list():
     users = User.query.filter(User.id != current_user.id).order_by(User.name).all()
     following_ids = {f.followed_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
-    return render_template("social/users.html", users=users, following_ids=following_ids, active="social")
+    return render_template("social/users.html", users=users, following_ids=following_ids, active="network")
 
 
 @bp.route("/user/<int:user_id>")

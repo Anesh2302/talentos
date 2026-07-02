@@ -97,7 +97,7 @@
     <h2>TalentOS</h2>
     <a href="/dashboard" class="{% if active == 'dashboard' %}active{% endif %}">Dashboard</a>
     <a href="/social/feed" class="{% if active == 'social' %}active{% endif %}">Feed</a>
-    <a href="/social/users" class="{% if active == 'network' %}active{% endif %}">Network</a>
+    <a href="/social/users" class="{% if active == 'social' or active == 'network' %}active{% endif %}">Network</a>
     <a href="/jobs" class="{% if active == 'jobs' %}active{% endif %}">Jobs</a>
     <a href="/companies" class="{% if active == 'companies' %}active{% endif %}">Companies</a>
     {% if current_user.role in ('admin','recruiter') %}
