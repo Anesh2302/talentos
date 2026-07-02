@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_user, logout_user, login_required, current_user
 from ..models import User, PasswordResetToken, LoginHistory, BackupCode
 from ..otp import generate_secret, generate_otp, verify_otp, send_otp_email
@@ -55,8 +55,11 @@ def _record_login(email, success, user_id=None):
     db.session.commit()
 
 
-@bp.route("/login", methods=["POST"])
+@bp.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "GET":
+        return render_template("login.html")
+
     data = request.get_json()
     user = User.query.filter_by(email=data["email"]).first()
 
