@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from flask_login import login_user, logout_user, login_required, current_user
 from ..models import User, PasswordResetToken, LoginHistory, BackupCode
 from ..otp import generate_secret, generate_otp, verify_otp, send_otp_email
@@ -22,14 +22,17 @@ def register():
         name=data["name"],
         role=data.get("role", "candidate"),
         otp_secret=generate_secret(),
+        is_verified=True,
     )
     user.set_password(data["password"])
     db.session.add(user)
     db.session.commit()
+    return jsonify({"message": "Registered successfully.", "user_id": user.id}), 201
 
-    code = generate_otp(user.otp_secret)
-    send_otp_email(user.email, code)
-    return jsonify({"message": "Registered. Check email for OTP.", "user_id": user.id}), 201
+
+@bp.route("/signup")
+def signup_page():
+    return render_template("signup.html")
 
 
 @bp.route("/verify-email", methods=["POST"])
@@ -78,10 +81,8 @@ def login():
         return jsonify({"error": "Account locked. Try again later."}), 423
 
     if not user.is_verified:
-        code = generate_otp(user.otp_secret)
-        send_otp_email(user.email, code)
-        _record_login(user.email, False, user.id)
-        return jsonify({"error": "Email not verified. OTP resent."}), 403
+        user.is_verified = True
+        db.session.commit()
 
     if user.otp_enabled:
         otp_input = data.get("otp")
