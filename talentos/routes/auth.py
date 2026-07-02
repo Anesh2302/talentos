@@ -69,10 +69,22 @@ def login():
     if request.method == "GET":
         return render_template("login.html")
 
+    import sys
+    print("LOGIN: POST received", file=sys.stdout)
+    sys.stdout.flush()
+
     data = request.get_json(force=True, silent=True)
+    print(f"LOGIN: data={data}", file=sys.stdout)
+    sys.stdout.flush()
+
     if not data or "email" not in data:
+        print("LOGIN: Invalid JSON body", file=sys.stdout)
+        sys.stdout.flush()
         return jsonify({"error": "Invalid JSON body"}), 400
+
     user = User.query.filter_by(email=data["email"]).first()
+    print(f"LOGIN: user found={user is not None}", file=sys.stdout)
+    sys.stdout.flush()
 
     if not user or not user.check_password(data["password"]):
         _record_login(data.get("email", "?"), False)
