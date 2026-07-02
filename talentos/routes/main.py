@@ -8,7 +8,7 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def index():
-    return jsonify({"message": "TalentOS API", "version": "2.0.0"})
+    return redirect(url_for("main.dashboard"))
 
 
 @bp.route("/dashboard")
