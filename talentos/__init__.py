@@ -1,7 +1,7 @@
 import logging, sys
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, force=True)
 
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
