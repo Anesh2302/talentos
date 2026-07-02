@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ user.name }} - TalentOS{% endblock %}
+{% block heading %}{{ user.name }}{% endblock %}
+{% block content %}
+<style>
+  .profile-header { display: flex; gap: 24px; align-items: flex-start; background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #58a6ff, #f0883e); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 32px; flex-shrink: 0; }
+  .profile-meta { flex: 1; }
+  .profile-name { color: #f0f6fc; font-size: 20px; font-weight: 700; }
+  .profile-headline { color: #8b949e; font-size: 14px; margin: 4px 0; }
+  .profile-stats { display: flex; gap: 24px; margin-top: 12px; }
+  .profile-stat { text-align: center; }
+  .profile-stat-num { color: #f0f6fc; font-size: 18px; font-weight: 700; }
+  .profile-stat-label { color: #484f58; font-size: 12px; text-transform: uppercase; }
+</style>
+
+<div class="profile-header">
+  <div class="profile-avatar">{{ user.name[0] }}</div>
+  <div class="profile-meta">
+    <div class="profile-name">{{ user.name }}</div>
+    <div class="profile-headline">{{ user.headline or user.role|capitalize }}</div>
+    <div style="margin-top:8px;">
+      <button class="btn {{ 'btn-secondary' if is_following else 'btn-primary' }}" onclick="toggleFollow({{ user.id }})" style="border-radius:20px;">
+        {{ 'Following' if is_following else 'Follow' }}
+      </button>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="profile-stat-num">{{ follower_count }}</div><div class="profile-stat-label">Followers</div></div>
+      <div class="profile-stat"><div class="profile-stat-num">{{ following_count }}</div><div class="profile-stat-label">Following</div></div>
+      <div class="profile-stat"><div class="profile-stat-num">{{ posts|length }}</div><div class="profile-stat-label">Posts</div></div>
+    </div>
+  </div>
+</div>
+
+<h3 style="color:#f0f6fc;margin-bottom:16px;font-size:16px;">Posts</h3>
+{% for post in posts %}
+<div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;margin-bottom:12px;">
+  <div style="color:#484f58;font-size:12px;margin-bottom:8px;">{{ post.created_at.strftime('%b %d, %Y at %I:%M %p') if post.created_at else '' }}</div>
+  <div style="color:#c9d1d9;font-size:14px;line-height:1.6;white-space:pre-wrap;">{{ post.content }}</div>
+  <div style="color:#8b949e;font-size:12px;margin-top:8px;">♡ {{ post.likes|length }} &nbsp;💬 {{ post.comments|length }}</div>
+</div>
+{% endfor %}
+{% if not posts %}
+<div class="empty">No posts yet.</div>
+{% endif %}
+
+<script>
+function toggleFollow(userId) {
+  fetch('/social/user/'+userId+'/follow', { method:'POST' })
+    .then(r=>r.json()).then(d=>{ location.reload(); });
+}
+</script>
+{% endblock %}

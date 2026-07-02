@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Feed - TalentOS{% endblock %}
+{% block heading %}Feed{% endblock %}
+{% block content %}
+<style>
+  .post-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .post-card:hover { border-color: #484f58; }
+  .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .post-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #58a6ff, #f0883e); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 16px; }
+  .post-meta { flex: 1; }
+  .post-author { color: #f0f6fc; font-weight: 600; font-size: 14px; text-decoration: none; }
+  .post-author:hover { color: #58a6ff; }
+  .post-time { color: #484f58; font-size: 12px; }
+  .post-content { color: #c9d1d9; font-size: 14px; line-height: 1.6; margin-bottom: 12px; white-space: pre-wrap; }
+  .post-actions { display: flex; gap: 16px; border-top: 1px solid #30363d; padding-top: 12px; }
+  .post-action { display: flex; align-items: center; gap: 6px; color: #8b949e; cursor: pointer; font-size: 13px; padding: 4px 12px; border-radius: 6px; transition: all 0.2s; border: none; background: none; }
+  .post-action:hover { color: #58a6ff; background: #1c2128; }
+  .post-action.liked { color: #f0883e; }
+  .comment-section { border-top: 1px solid #30363d; padding-top: 12px; margin-top: 12px; }
+  .comment { display: flex; gap: 10px; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #21262d; }
+  .comment-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #58a6ff, #f0883e); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: bold; flex-shrink: 0; }
+  .comment-body { flex: 1; }
+  .comment-author { color: #58a6ff; font-size: 12px; font-weight: 600; text-decoration: none; }
+  .comment-text { color: #c9d1d9; font-size: 13px; }
+  .comment-time { color: #484f58; font-size: 11px; }
+  .comment-input { display: flex; gap: 8px; margin-top: 8px; }
+  .comment-input input { flex: 1; margin-bottom: 0; }
+  .compose-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .compose-card textarea { min-height: 80px; margin-bottom: 12px; }
+  .char-count { color: #484f58; font-size: 12px; text-align: right; }
+  .delete-btn { color: #f85149; cursor: pointer; font-size: 12px; background: none; border: none; padding: 2px 8px; border-radius: 4px; }
+  .delete-btn:hover { background: #3a1c1c; }
+</style>
+
+<div class="compose-card">
+  <h3 style="color:#f0f6fc;margin-bottom:12px;font-size:15px;">Share an update</h3>
+  <textarea id="postContent" placeholder="What's on your mind?" maxlength="2000"></textarea>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="char-count"><span id="charCount">0</span>/2000</div>
+    <button class="btn btn-primary" onclick="createPost()">Post</button>
+  </div>
+</div>
+
+<div id="feed">
+  {% for post in posts %}
+  <div class="post-card" id="post-{{ post.id }}">
+    <div class="post-header">
+      <div class="post-avatar">{{ post.user.name[0] }}</div>
+      <div class="post-meta">
+        <a href="/social/user/{{ post.user.id }}" class="post-author">{{ post.user.name }}</a>
+        <div class="post-time">{{ post.created_at.strftime('%b %d, %Y at %I:%M %p') if post.created_at else '' }}</div>
+      </div>
+      {% if post.user_id == current_user.id or current_user.role == 'admin' %}
+      <button class="delete-btn" onclick="deletePost({{ post.id }})">Delete</button>
+      {% endif %}
+    </div>
+    <div class="post-content">{{ post.content }}</div>
+    <div class="post-actions">
+      <button class="post-action {% if current_user.id in post.likes|map(attribute='user_id')|list %}liked{% endif %}" onclick="toggleLike({{ post.id }})">
+        <span id="like-icon-{{ post.id }}">{% if current_user.id in post.likes|map(attribute='user_id')|list %}♥{% else %}♡{% endif %}</span>
+        <span id="like-count-{{ post.id }}">{{ post.likes|length }}</span>
+      </button>
+      <button class="post-action" onclick="document.getElementById('comment-input-{{ post.id }}').focus()">💬 {{ post.comments|length }}</button>
+    </div>
+    <div class="comment-section" id="comments-{{ post.id }}">
+      {% for comment in post.comments %}
+      <div class="comment">
+        <div class="comment-avatar">{{ comment.user.name[0] }}</div>
+        <div class="comment-body">
+          <a href="/social/user/{{ comment.user.id }}" class="comment-author">{{ comment.user.name }}</a>
+          <div class="comment-text">{{ comment.content }}</div>
+          <div class="comment-time">{{ comment.created_at.strftime('%b %d, %Y') if comment.created_at else '' }}</div>
+        </div>
+      </div>
+      {% endfor %}
+      <div class="comment-input">
+        <input id="comment-input-{{ post.id }}" placeholder="Write a comment..." onkeydown="if(event.key==='Enter')addComment({{ post.id }})">
+        <button class="btn btn-secondary" style="width:auto;padding:8px 16px;" onclick="addComment({{ post.id }})">Send</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% if not posts %}
+  <div class="empty">No posts yet. Be the first to share!</div>
+  {% endif %}
+</div>
+
+<script>
+const csrfToken = "{{ csrf_token() if csrf_token is defined else '' }}";
+function createPost() {
+  const content = document.getElementById('postContent').value.trim();
+  if (!content) return alert('Please write something');
+  fetch('/social/post', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content}) })
+    .then(r=>r.json()).then(d=>{ if(d.id) location.reload(); else alert(d.error); });
+}
+function deletePost(id) {
+  if (!confirm('Delete this post?')) return;
+  fetch('/social/post/'+id+'/delete', { method:'POST' })
+    .then(r=>r.json()).then(d=>{ if(d.message) location.reload(); });
+}
+function toggleLike(id) {
+  fetch('/social/post/'+id+'/like', { method:'POST' })
+    .then(r=>r.json()).then(d=>{
+      document.getElementById('like-count-'+id).textContent = d.count;
+      document.getElementById('like-icon-'+id).textContent = d.liked ? '♥' : '♡';
+    });
+}
+function addComment(postId) {
+  const input = document.getElementById('comment-input-'+postId);
+  const content = input.value.trim();
+  if (!content) return;
+  fetch('/social/post/'+postId+'/comment', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content}) })
+    .then(r=>r.json()).then(d=>{
+      if (d.comment) { location.reload(); }
+    });
+}
+document.getElementById('postContent')?.addEventListener('input', function(){
+  document.getElementById('charCount').textContent = this.value.length;
+});
+</script>
+{% endblock %}

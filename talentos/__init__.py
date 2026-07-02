@@ -70,7 +70,7 @@ def create_app():
 
     login_manager.login_view = "auth.login"
 
-    from .routes import auth, main, admin, company, jobs, messages, applications, profile
+    from .routes import auth, main, admin, company, jobs, messages, applications, profile, social
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(admin.bp)
@@ -79,6 +79,7 @@ def create_app():
     app.register_blueprint(messages.bp)
     app.register_blueprint(applications.bp)
     app.register_blueprint(profile.bp)
+    app.register_blueprint(social.bp)
 
     with app.app_context():
         db.create_all()

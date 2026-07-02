@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Users - TalentOS{% endblock %}
+{% block heading %}Connect with People{% endblock %}
+{% block content %}
+<style>
+  .user-card { display: flex; align-items: center; gap: 16px; background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; transition: all 0.2s; }
+  .user-card:hover { border-color: #484f58; }
+  .user-card:hover .avatar { transform: scale(1.05); }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #58a6ff, #f0883e); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 18px; flex-shrink: 0; transition: transform 0.2s; }
+  .user-info { flex: 1; }
+  .user-name { color: #f0f6fc; font-weight: 600; font-size: 15px; text-decoration: none; }
+  .user-name:hover { color: #58a6ff; }
+  .user-headline { color: #8b949e; font-size: 13px; }
+  .follow-btn { padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .follow-btn.following { background: #1c2128; color: #58a6ff; border: 1px solid #58a6ff; }
+  .follow-btn.following:hover { background: #3a1c1c; color: #f85149; border-color: #f85149; }
+  .follow-btn.not-following { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; }
+  .follow-btn.not-following:hover { transform: translateY(-1px); }
+</style>
+
+{% for u in users %}
+<div class="user-card">
+  <div class="avatar">{{ u.name[0] }}</div>
+  <div class="user-info">
+    <a href="/social/user/{{ u.id }}" class="user-name">{{ u.name }}</a>
+    <div class="user-headline">{{ u.headline or u.role|capitalize }}</div>
+  </div>
+  <button class="follow-btn {{ 'following' if u.id in following_ids else 'not-following' }}" onclick="toggleFollow({{ u.id }})">
+    {{ 'Following' if u.id in following_ids else 'Follow' }}
+  </button>
+</div>
+{% endfor %}
+{% if not users %}
+<div class="empty">No other users found.</div>
+{% endif %}
+
+<script>
+function toggleFollow(userId) {
+  fetch('/social/user/'+userId+'/follow', { method:'POST' })
+    .then(r=>r.json()).then(d=>{ location.reload(); });
+}
+</script>
+{% endblock %}
