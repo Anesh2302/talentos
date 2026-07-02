@@ -11,7 +11,9 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 @bp.route("/register", methods=["POST"])
 def register():
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
+    if not data or "email" not in data:
+        return jsonify({"error": "Invalid JSON body"}), 400
     if User.query.filter_by(email=data["email"]).first():
         return jsonify({"error": "Email already registered"}), 400
 
@@ -60,7 +62,9 @@ def login():
     if request.method == "GET":
         return render_template("login.html")
 
-    data = request.get_json()
+    data = request.get_json(force=True, silent=True)
+    if not data or "email" not in data:
+        return jsonify({"error": "Invalid JSON body"}), 400
     user = User.query.filter_by(email=data["email"]).first()
 
     if not user or not user.check_password(data["password"]):
