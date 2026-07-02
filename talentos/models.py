@@ -209,7 +209,7 @@ class UserSkill(db.Model):
     skill_id = db.Column(db.Integer, db.ForeignKey("skill.id"), nullable=False)
     proficiency = db.Column(db.String(20), default="intermediate")
 
-    user = db.relationship("User", foreign_keys=[user_id], lazy=True)
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True, overlaps="skills")
     skill = db.relationship("Skill", lazy=True)
 
 

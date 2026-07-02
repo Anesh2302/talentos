@@ -1,7 +1,5 @@
-import logging, sys
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, force=True)
-
-from flask import Flask, request
+import sqlalchemy as sa
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -9,6 +7,57 @@ from flask_mail import Mail
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
+
+
+def _migrate_schema(engine):
+    if "postgresql" not in str(engine.url) and "postgres" not in str(engine.url):
+        return
+    inspector = sa.inspect(engine)
+    for table in db.metadata.sorted_tables:
+        tname = table.name
+        existing = {c["name"] for c in inspector.get_columns(tname)}
+        for col in table.columns:
+            if col.name in existing or col.primary_key:
+                continue
+            nullable = "NULL" if col.nullable else "NOT NULL"
+            default = col.default.arg if col.default else None
+            col_type = _pg_type(col)
+            default_clause = f" DEFAULT {default}" if default is not None else ""
+            if default is not None:
+                if isinstance(default, str):
+                    default_clause = f" DEFAULT '{default}'"
+                else:
+                    default_clause = f" DEFAULT {default}"
+            if col.foreign_keys:
+                fk = next(iter(col.foreign_keys))
+                ref = f"{fk.column.table.name}({fk.column.name})"
+                db.session.execute(sa.text(
+                    f'ALTER TABLE "{tname}" ADD COLUMN {col.name} {col_type} REFERENCES {ref}'
+                ))
+            else:
+                db.session.execute(sa.text(
+                    f'ALTER TABLE "{tname}" ADD COLUMN {col.name} {col_type}{default_clause} {nullable}'
+                ))
+        db.session.commit()
+
+
+def _pg_type(col):
+    t = col.type
+    if isinstance(t, sa.Integer):
+        return "INTEGER"
+    if isinstance(t, sa.String):
+        return f"VARCHAR({t.length or 255})"
+    if isinstance(t, sa.Text):
+        return "TEXT"
+    if isinstance(t, sa.Boolean):
+        return "BOOLEAN"
+    if isinstance(t, sa.DateTime):
+        return "TIMESTAMP"
+    if isinstance(t, sa.Date):
+        return "DATE"
+    if isinstance(t, sa.Float):
+        return "FLOAT"
+    return "TEXT"
 
 
 def create_app():
@@ -20,21 +69,6 @@ def create_app():
     mail.init_app(app)
 
     login_manager.login_view = "auth.login"
-
-    @app.before_request
-    def log_request():
-        if request.method == "POST":
-            import logging
-            ct = request.content_type or "none"
-            cl = request.content_length or -1
-            logging.getLogger("app").info(f"POST {request.path} ct={ct} cl={cl}")
-
-    @app.errorhandler(500)
-    def handle_500(e):
-        import traceback, logging
-        tb = traceback.format_exc()
-        logging.getLogger("app").error(f"500 on {request.method} {request.path}:\n{tb}")
-        return {"error": "Internal server error"}, 500
 
     from .routes import auth, main, admin, company, jobs, messages, applications, profile
     app.register_blueprint(auth.bp)
@@ -48,5 +82,6 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _migrate_schema(db.engine)
 
     return app
