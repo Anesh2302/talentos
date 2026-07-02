@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Profile{% endblock %}
+{% block heading %}Your Profile{% endblock %}
+{% block content %}
+<div class="grid" style="grid-template-columns:1fr 2fr">
+  <div class="card" style="text-align:center">
+    <div style="width:100px;height:100px;border-radius:50%;background:#1c2128;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:40px;color:#58a6ff;overflow:hidden">
+      {% if current_user.profile_pic %}<img src="{{ current_user.profile_pic }}" style="width:100%;height:100%;object-fit:cover">{% else %}{{ current_user.name[0] }}{% endif %}
+    </div>
+    <h2 style="color:#f0f6fc;font-size:18px">{{ current_user.name }}</h2>
+    <p style="color:#8b949e;font-size:13px;margin-top:4px">{{ current_user.headline or '' }}</p>
+    <p style="color:#484f58;font-size:12px;margin-top:8px">{{ current_user.email }} · {{ current_user.role }}</p>
+    <p style="color:#484f58;font-size:12px">{{ current_user.location or '' }}</p>
+    <a href="/profile/edit" class="btn btn-secondary" style="margin-top:16px">Edit Profile</a>
+  </div>
+  <div>
+    {% if current_user.summary %}
+    <div class="card">
+      <h3>Summary</h3>
+      <p style="color:#c9d1d9;line-height:1.6">{{ current_user.summary }}</p>
+    </div>
+    {% endif %}
+    <div class="card">
+      <h3>Skills</h3>
+      {% set skills = current_user.skills %}
+      {% if skills %}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        {% for us in skills %}
+        <span class="badge open">{{ us.skill.name }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">No skills added</p>
+      {% endif %}
+    </div>
+    {% if current_user.company %}
+    <div class="card">
+      <h3>Company</h3>
+      <p><a href="/companies/{{ current_user.company.id }}" style="color:#58a6ff;text-decoration:none">{{ current_user.company.name }}</a></p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

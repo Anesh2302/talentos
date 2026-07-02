@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — New Message{% endblock %}
+{% block heading %}New Message{% endblock %}
+{% block content %}
+<div class="card">
+  <p style="color:#8b949e;margin-bottom:16px">To: <strong style="color:#f0f6fc">{{ recipient.name }}</strong></p>
+  <form method="POST">
+    <label for="subject">Subject</label>
+    <input type="text" id="subject" name="subject" placeholder="Optional subject">
+    <label for="content">Message</label>
+    <textarea id="content" name="content" required placeholder="Write your message..." rows="5"></textarea>
+    <button type="submit" class="btn btn-primary">Send</button>
+    <a href="/messages" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

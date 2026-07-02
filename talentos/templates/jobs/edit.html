@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Edit Job{% endblock %}
+{% block heading %}Edit {{ job.title }}{% endblock %}
+{% block content %}
+<div class="card">
+  <form method="POST">
+    <div class="form-row">
+      <div><label for="title">Job Title</label><input type="text" id="title" name="title" value="{{ job.title }}" required></div>
+      <div><label for="company_id">Company</label><select id="company_id" name="company_id" required>
+        {% for c in companies %}
+        <option value="{{ c.id }}" {% if job.company_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select></div>
+    </div>
+    <div class="form-row">
+      <div><label for="location">Location</label><input type="text" id="location" name="location" value="{{ job.location or '' }}"></div>
+      <div><label for="job_type">Job Type</label><select id="job_type" name="job_type">
+        {% for t in ['full-time','part-time','contract','internship','remote'] %}
+        <option value="{{ t }}" {% if job.job_type == t %}selected{% endif %}>{{ t|replace('-',' ')|title }}</option>
+        {% endfor %}
+      </select></div>
+      <div><label for="experience_level">Experience</label><select id="experience_level" name="experience_level">
+        {% for e in ['entry','mid','senior','lead'] %}
+        <option value="{{ e }}" {% if job.experience_level == e %}selected{% endif %}>{{ e|title }}</option>
+        {% endfor %}
+      </select></div>
+    </div>
+    <div class="form-row">
+      <div><label for="salary_min">Min Salary</label><input type="number" id="salary_min" name="salary_min" value="{{ job.salary_min or '' }}"></div>
+      <div><label for="salary_max">Max Salary</label><input type="number" id="salary_max" name="salary_max" value="{{ job.salary_max or '' }}"></div>
+    </div>
+    <label for="skills_required">Required Skills</label>
+    <input type="text" id="skills_required" name="skills_required" value="{{ job.skills_required or '' }}">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" required>{{ job.description }}</textarea>
+    <label for="requirements">Requirements</label>
+    <textarea id="requirements" name="requirements">{{ job.requirements or '' }}</textarea>
+    <div class="form-row">
+      <div><label for="status">Status</label><select id="status" name="status">
+        <option value="open" {% if job.status == 'open' %}selected{% endif %}>Open</option>
+        <option value="closed" {% if job.status == 'closed' %}selected{% endif %}>Closed</option>
+      </select></div>
+    </div>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="/jobs/{{ job.id }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

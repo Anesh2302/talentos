@@ -6,21 +6,30 @@
   <title>Talentos — Login</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 40px; width: 380px; }
-    h1 { color: #58a6ff; text-align: center; margin-bottom: 8px; font-size: 24px; }
-    .subtitle { text-align: center; color: #8b949e; font-size: 14px; margin-bottom: 28px; }
-    label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; }
-    input { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 14px; margin-bottom: 18px; outline: none; }
-    input:focus { border-color: #58a6ff; }
-    button { width: 100%; padding: 10px; background: #238636; border: none; border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
-    button:hover { background: #2ea043; }
-    .error { background: #f85149; color: #fff; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes glow { 0%, 100% { box-shadow: 0 0 5px rgba(88,166,255,0.2); } 50% { box-shadow: 0 0 25px rgba(88,166,255,0.4); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: #c9d1d9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { background: linear-gradient(135deg, #161b22 0%, #1c2128 100%); border: 1px solid #30363d; border-radius: 16px; padding: 48px 40px; width: 400px; animation: fadeIn 0.6s ease-out; position: relative; overflow: hidden; }
+    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #58a6ff, #f0883e, #3fb950); }
+    h1 { color: #58a6ff; text-align: center; margin-bottom: 4px; font-size: 28px; text-shadow: 0 0 30px rgba(88,166,255,0.15); letter-spacing: 1px; }
+    h1::before { content: "◆ "; font-size: 18px; color: #f0883e; }
+    .subtitle { text-align: center; color: #8b949e; font-size: 14px; margin-bottom: 32px; }
+    label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; font-weight: 600; }
+    input { width: 100%; padding: 12px 14px; background: #0d1117; border: 2px solid #30363d; border-radius: 10px; color: #c9d1d9; font-size: 14px; margin-bottom: 20px; outline: none; transition: all 0.25s ease; }
+    input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); background: #161b22; }
+    button { width: 100%; padding: 12px; background: linear-gradient(135deg, #238636, #2ea043); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 10px rgba(35,134,54,0.3); letter-spacing: 0.5px; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(35,134,54,0.4); }
+    button:active { transform: translateY(0); }
+    .error { background: linear-gradient(135deg, #3a1c1c, #4a1c1c); color: #f85149; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: none; border: 1px solid #6a2d2d; animation: fadeIn 0.3s ease-out; }
     .loading { display: none; text-align: center; color: #8b949e; font-size: 13px; margin-top: 12px; }
-    .link { text-align: center; margin-top: 16px; font-size: 13px; }
-    .link a { color: #58a6ff; text-decoration: none; }
-    .link a:hover { text-decoration: underline; }
-    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #484f58; }
+    .loading::before { content: ""; display: inline-block; width: 18px; height: 18px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+    .link { text-align: center; margin-top: 20px; font-size: 13px; }
+    .link a { color: #58a6ff; text-decoration: none; transition: color 0.2s; }
+    .link a:hover { color: #f0883e; text-decoration: underline; }
+    .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #484f58; }
+    .success-msg { background: linear-gradient(135deg, #1c3a1f, #1c4a1f); color: #3fb950; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; border: 1px solid #2d6a30; animation: fadeIn 0.3s ease-out; display: none; }
   </style>
 </head>
 <body>
@@ -57,7 +66,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const data = await res.json();
     if (res.ok) {
       const params = new URLSearchParams(window.location.search);
-      window.location.href = params.get('next') || '/admin/dashboard';
+      window.location.href = params.get('next') || '/dashboard';
     } else {
       errorEl.textContent = data.error || data.message || 'Login failed';
       errorEl.style.display = 'block';

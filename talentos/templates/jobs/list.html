@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Jobs{% endblock %}
+{% block heading %}Jobs{% endblock %}
+{% block content %}
+<div style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+  <a href="/jobs/create" class="btn btn-primary">+ Post Job</a>
+  <form method="GET" style="display:flex;gap:8px;flex:1;flex-wrap:wrap">
+    <input type="text" name="search" placeholder="Search jobs..." value="{{ request.args.get('search','') }}" style="width:200px;margin:0">
+    <select name="job_type" style="width:140px;margin:0">
+      <option value="">All Types</option>
+      {% for t in ['full-time','part-time','contract','internship','remote'] %}
+      <option value="{{ t }}" {% if request.args.get('job_type') == t %}selected{% endif %}>{{ t|replace('-',' ')|title }}</option>
+      {% endfor %}
+    </select>
+    <select name="experience" style="width:130px;margin:0">
+      <option value="">All Levels</option>
+      {% for e in ['entry','mid','senior','lead'] %}
+      <option value="{{ e }}" {% if request.args.get('experience') == e %}selected{% endif %}>{{ e|title }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+  </form>
+</div>
+{% if jobs %}
+<table>
+  <tr><th>Title</th><th>Company</th><th>Location</th><th>Type</th><th>Level</th><th>Posted</th></tr>
+  {% for j in jobs %}
+  <tr>
+    <td><a href="/jobs/{{ j.id }}" style="color:#58a6ff;text-decoration:none;font-weight:600">{{ j.title }}</a></td>
+    <td>{{ j.company.name if j.company else '—' }}</td>
+    <td>{{ j.location or '—' }}</td>
+    <td>{{ j.job_type }}</td>
+    <td>{{ j.experience_level or '—' }}</td>
+    <td>{{ j.created_at.strftime('%b %d') }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No jobs found. <a href="/jobs/create" style="color:#58a6ff">Post one</a></p>
+{% endif %}
+{% endblock %}

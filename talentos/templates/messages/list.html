@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Messages{% endblock %}
+{% block heading %}Messages{% endblock %}
+{% block content %}
+{% if conversations %}
+{% for c in conversations %}
+<div class="card" style="cursor:pointer" onclick="window.location='/messages/{{ c.id }}'">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <strong style="color:#f0f6fc">{{ c.subject or 'Conversation' }}</strong>
+      <p style="color:#8b949e;font-size:12px;margin-top:4px">
+        {% for p in c.participants %}
+          {% if p.user_id != current_user.id %}{{ p.user.name }}{% endif %}
+        {% endfor %}
+        · {{ c.messages|length }} messages
+      </p>
+    </div>
+    <span style="color:#8b949e;font-size:12px">{{ c.updated_at.strftime('%b %d') }}</span>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<p class="empty">No conversations yet. Start one from a job or profile page.</p>
+{% endif %}
+{% endblock %}

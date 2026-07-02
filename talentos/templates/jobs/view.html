@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — {{ job.title }}{% endblock %}
+{% block heading %}{{ job.title }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap">
+    <div>
+      <p style="color:#8b949e;font-size:13px">
+        <a href="/companies/{{ job.company.id }}" style="color:#58a6ff;text-decoration:none">{{ job.company.name if job.company else 'Unknown' }}</a>
+        · {{ job.location or '—' }} · {{ job.job_type }} · {{ job.experience_level or '—' }}
+      </p>
+      {% if job.salary_min or job.salary_max %}
+      <p style="color:#3fb950;font-size:15px;font-weight:600;margin-top:6px">
+        {% if job.salary_min and job.salary_max %}${{ job.salary_min }} - ${{ job.salary_max }}/yr
+        {% elif job.salary_min %}From ${{ job.salary_min }}/yr
+        {% elif job.salary_max %}Up to ${{ job.salary_max }}/yr{% endif %}
+      </p>
+      {% endif %}
+    </div>
+    <span class="badge {{ job.status }}">{{ job.status }}</span>
+  </div>
+
+  <h3 style="color:#f0f6fc;margin:20px 0 8px">Description</h3>
+  <p style="color:#c9d1d9;line-height:1.6;white-space:pre-wrap">{{ job.description }}</p>
+
+  {% if job.requirements %}
+  <h3 style="color:#f0f6fc;margin:20px 0 8px">Requirements</h3>
+  <p style="color:#c9d1d9;line-height:1.6;white-space:pre-wrap">{{ job.requirements }}</p>
+  {% endif %}
+
+  {% if job.skills_required %}
+  <h3 style="color:#f0f6fc;margin:20px 0 8px">Skills</h3>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    {% for s in job.skills_required.split(',') %}
+    <span class="badge open">{{ s.strip() }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div style="margin-top:24px;display:flex;gap:10px">
+    {% if current_user.is_authenticated and current_user.role == 'candidate' %}
+    <form method="POST" action="/jobs/{{ job.id }}/apply" style="display:inline">
+      <button type="submit" class="btn btn-primary">Apply Now</button>
+    </form>
+    {% endif %}
+    {% if current_user.is_authenticated and (current_user.id == job.created_by or current_user.role == 'admin') %}
+    <a href="/jobs/{{ job.id }}/edit" class="btn btn-secondary">Edit</a>
+    {% endif %}
+    <a href="/messages/new/{{ job.created_by }}" class="btn btn-secondary">Message Recruiter</a>
+  </div>
+</div>
+{% endblock %}

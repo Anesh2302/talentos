@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Application{% endblock %}
+{% block heading %}Application for {{ application.job.title }}{% endblock %}
+{% block content %}
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card">
+    <h3>Applicant</h3>
+    <p style="font-size:16px;font-weight:600;margin-bottom:4px"><a href="/profile/{{ application.applicant.id }}" style="color:#58a6ff;text-decoration:none">{{ application.applicant.name }}</a></p>
+    <p style="color:#8b949e;font-size:13px">{{ application.applicant.email }}</p>
+    <p style="color:#8b949e;font-size:13px">{{ application.applicant.headline or '' }}</p>
+  </div>
+  <div class="card">
+    <h3>Details</h3>
+    <p style="color:#8b949e;font-size:13px">Status: <span class="badge {{ application.status }}">{{ application.status }}</span></p>
+    <p style="color:#8b949e;font-size:13px;margin-top:6px">Score: <strong>{{ application.score|int }}%</strong></p>
+    <p style="color:#8b949e;font-size:13px;margin-top:6px">Applied: {{ application.created_at.strftime('%b %d, %Y') }}</p>
+  </div>
+</div>
+
+{% if application.cover_letter %}
+<div class="card">
+  <h3>Cover Letter</h3>
+  <p style="color:#c9d1d9;line-height:1.6;white-space:pre-wrap">{{ application.cover_letter }}</p>
+</div>
+{% endif %}
+
+{% if current_user.role in ('admin','recruiter') %}
+<div class="card">
+  <h3>ATS Actions</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+    <form method="POST" action="/applications/{{ application.id }}/status" style="display:inline">
+      <input type="hidden" name="status" value="screening">
+      <button type="submit" class="btn btn-secondary">Move to Screening</button>
+    </form>
+    <form method="POST" action="/applications/{{ application.id }}/status" style="display:inline">
+      <input type="hidden" name="status" value="interview">
+      <button type="submit" class="btn btn-secondary">Move to Interview</button>
+    </form>
+    <form method="POST" action="/applications/{{ application.id }}/status" style="display:inline">
+      <input type="hidden" name="status" value="offer">
+      <button type="submit" class="btn btn-primary">Make Offer</button>
+    </form>
+    <form method="POST" action="/applications/{{ application.id }}/status" style="display:inline">
+      <input type="hidden" name="status" value="rejected">
+      <button type="submit" class="btn btn-danger">Reject</button>
+    </form>
+    <form method="POST" action="/applications/{{ application.id }}/status" style="display:inline">
+      <input type="hidden" name="status" value="hired">
+      <button type="submit" class="btn btn-primary">Hire</button>
+    </form>
+  </div>
+  <form method="POST" action="/applications/{{ application.id }}/score" style="display:flex;gap:10px;align-items:center">
+    <label for="score" style="margin:0;white-space:nowrap">Score (0-100):</label>
+    <input type="number" id="score" name="score" min="0" max="100" value="{{ application.score|int }}" style="width:100px;margin:0">
+    <button type="submit" class="btn btn-secondary">Set Score</button>
+  </form>
+</div>
+{% endif %}
+
+<div style="margin-top:12px">
+  <a href="/messages/new/{{ application.applicant.id }}" class="btn btn-primary">Message Applicant</a>
+  <a href="/applications" class="btn btn-secondary">Back to Applications</a>
+</div>
+{% endblock %}

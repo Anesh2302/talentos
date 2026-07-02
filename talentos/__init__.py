@@ -18,10 +18,15 @@ def create_app():
 
     login_manager.login_view = "auth.login"
 
-    from .routes import auth, main, admin
+    from .routes import auth, main, admin, company, jobs, messages, applications, profile
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(company.bp)
+    app.register_blueprint(jobs.bp)
+    app.register_blueprint(messages.bp)
+    app.register_blueprint(applications.bp)
+    app.register_blueprint(profile.bp)
 
     with app.app_context():
         db.create_all()

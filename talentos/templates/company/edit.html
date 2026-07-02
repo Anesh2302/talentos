@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Edit Company{% endblock %}
+{% block heading %}Edit {{ company.name }}{% endblock %}
+{% block content %}
+<div class="card">
+  <form method="POST">
+    <label for="name">Company Name</label>
+    <input type="text" id="name" name="name" value="{{ company.name }}" required>
+    <label for="industry">Industry</label>
+    <input type="text" id="industry" name="industry" value="{{ company.industry or '' }}">
+    <label for="location">Location</label>
+    <input type="text" id="location" name="location" value="{{ company.location or '' }}">
+    <label for="size">Company Size</label>
+    <select id="size" name="size">
+      <option value="">Select size</option>
+      {% for s in ['1-10','11-50','51-200','201-1000','1000+'] %}
+      <option value="{{ s }}" {% if company.size == s %}selected{% endif %}>{{ s }} employees</option>
+      {% endfor %}
+    </select>
+    <label for="website">Website</label>
+    <input type="url" id="website" name="website" value="{{ company.website or '' }}">
+    <label for="logo_url">Logo URL</label>
+    <input type="url" id="logo_url" name="logo_url" value="{{ company.logo_url or '' }}">
+    <label for="description">Description</label>
+    <textarea id="description" name="description">{{ company.description or '' }}</textarea>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="/companies/{{ company.id }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

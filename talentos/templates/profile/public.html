@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — {{ profile.name }}{% endblock %}
+{% block heading %}{{ profile.name }}{% endblock %}
+{% block content %}
+<div class="grid" style="grid-template-columns:1fr 2fr">
+  <div class="card" style="text-align:center">
+    <div style="width:100px;height:100px;border-radius:50%;background:#1c2128;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:40px;color:#58a6ff">
+      {{ profile.name[0] }}
+    </div>
+    <h2 style="color:#f0f6fc;font-size:18px">{{ profile.name }}</h2>
+    <p style="color:#8b949e;font-size:13px;margin-top:4px">{{ profile.headline or '' }}</p>
+    <p style="color:#484f58;font-size:12px;margin-top:8px">{{ profile.location or '' }}</p>
+    <a href="/messages/new/{{ profile.id }}" class="btn btn-primary" style="margin-top:16px">Send Message</a>
+  </div>
+  <div>
+    {% if profile.summary %}
+    <div class="card">
+      <h3>Summary</h3>
+      <p style="color:#c9d1d9;line-height:1.6">{{ profile.summary }}</p>
+    </div>
+    {% endif %}
+    <div class="card">
+      <h3>Skills</h3>
+      {% set skills = profile.skills %}
+      {% if skills %}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        {% for us in skills %}
+        <span class="badge open">{{ us.skill.name }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">No skills listed</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

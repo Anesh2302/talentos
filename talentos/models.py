@@ -15,12 +15,21 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), default="candidate")
+    headline = db.Column(db.String(200), default="")
+    summary = db.Column(db.Text, default="")
+    location = db.Column(db.String(100), default="")
+    phone = db.Column(db.String(20), default="")
+    profile_pic = db.Column(db.String(500), default="")
+    company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     otp_secret = db.Column(db.String(32), default="")
     otp_enabled = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
     login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    company = db.relationship("Company", foreign_keys=[company_id], lazy=True)
+    skills = db.relationship("UserSkill", backref="user", lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -118,3 +127,101 @@ class BackupCode(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User", lazy=True)
+
+
+class Company(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    website = db.Column(db.String(200))
+    logo_url = db.Column(db.String(500))
+    industry = db.Column(db.String(100))
+    location = db.Column(db.String(200))
+    size = db.Column(db.String(50))
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    creator = db.relationship("User", foreign_keys=[created_by], lazy=True)
+    jobs = db.relationship("JobPosting", backref="company", lazy=True)
+
+
+class JobPosting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    requirements = db.Column(db.Text)
+    location = db.Column(db.String(200))
+    salary_min = db.Column(db.Integer)
+    salary_max = db.Column(db.Integer)
+    job_type = db.Column(db.String(50), default="full-time")
+    experience_level = db.Column(db.String(50))
+    skills_required = db.Column(db.Text)
+    status = db.Column(db.String(20), default="open")
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    creator = db.relationship("User", foreign_keys=[created_by], lazy=True)
+
+
+class Application(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey("job_posting.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    cover_letter = db.Column(db.Text)
+    resume_url = db.Column(db.String(500))
+    status = db.Column(db.String(30), default="applied")
+    score = db.Column(db.Float, default=0.0)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    job = db.relationship("JobPosting", backref="applications", lazy=True)
+    applicant = db.relationship("User", foreign_keys=[user_id], lazy=True)
+
+
+class Skill(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+
+class UserSkill(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    skill_id = db.Column(db.Integer, db.ForeignKey("skill.id"), nullable=False)
+    proficiency = db.Column(db.String(20), default="intermediate")
+
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True)
+    skill = db.relationship("Skill", lazy=True)
+
+
+class Conversation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(200))
+    job_id = db.Column(db.Integer, db.ForeignKey("job_posting.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    job = db.relationship("JobPosting", lazy=True)
+
+
+class ConversationParticipant(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey("conversation.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    conversation = db.relationship("Conversation", backref="participants", lazy=True)
+    user = db.relationship("User", lazy=True)
+
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey("conversation.id"), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    conversation = db.relationship("Conversation", backref="messages", lazy=True)
+    sender = db.relationship("User", foreign_keys=[sender_id], lazy=True)

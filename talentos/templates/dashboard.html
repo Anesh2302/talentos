@@ -1,98 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Talentos — Admin Dashboard</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
-    .container { max-width: 1000px; margin: auto; }
-    h1 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px; }
-    .stats { display: flex; gap: 15px; margin-bottom: 25px; }
-    .stat-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 18px; flex: 1; text-align: center; }
-    .stat-card h3 { font-size: 14px; color: #8b949e; }
-    .stat-card p { font-size: 28px; font-weight: bold; color: #58a6ff; }
-    h2 { color: #f0883e; margin: 20px 0 10px; }
-    table { width: 100%; border-collapse: collapse; background: #161b22; border-radius: 8px; overflow: hidden; }
-    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #30363d; }
-    th { background: #1c2128; color: #8b949e; font-size: 12px; text-transform: uppercase; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-    .high { background: #f85149; color: #fff; }
-    .medium { background: #d29922; color: #000; }
-    .low { background: #58a6ff; color: #fff; }
-    .pending { background: #d29922; color: #000; }
-    .in_progress { background: #1f6feb; color: #fff; }
-    .completed { background: #3fb950; color: #fff; }
-    .time { color: #8b949e; font-size: 13px; }
-    .empty { text-align: center; padding: 30px; color: #484f58; }
-    .footer { margin-top: 30px; text-align: center; color: #484f58; font-size: 12px; }
-    a { color: #58a6ff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .nav { margin-bottom: 20px; }
-    .nav a { margin-right: 15px; font-size: 14px; }
-  </style>
-</head>
-<body>
-<div class="container">
-  <h1>Talentos — Admin Dashboard</h1>
-
-  <div class="nav">
-    <a href="/admin/dashboard">Dashboard</a>
-    <a href="/admin/security">Security</a>
-    <a href="/admin/todos/export">Export Todos CSV</a>
-    <a href="/admin/candidates/export">Export Candidates CSV</a>
-    <a href="/admin/jobs/export">Export Jobs CSV</a>
-  </div>
-
-  <div class="stats">
-    <div class="stat-card"><h3>Total Todos</h3><p>{{ stats.total }}</p></div>
-    <div class="stat-card"><h3>Pending</h3><p>{{ stats.pending }}</p></div>
-    <div class="stat-card"><h3>Due Today</h3><p>{{ stats.today }}</p></div>
-    <div class="stat-card"><h3>Users</h3><p>{{ stats.users }}</p></div>
-    <div class="stat-card"><h3>Candidates</h3><p>{{ stats.candidates }}</p></div>
-    <div class="stat-card"><h3>Jobs</h3><p>{{ stats.jobs }}</p></div>
-  </div>
-
-  <h2>Today's Schedule ({{ stats.today }})</h2>
-  {% if todos %}
-  <table>
-    <tr><th>Time</th><th>Title</th><th>Priority</th><th>Status</th><th>Assigned To</th></tr>
-    {% for t in todos %}
-    <tr>
-      <td class="time">{{ t.scheduled_time or "—" }}</td>
-      <td>{{ t.title }}</td>
-      <td><span class="badge {{ t.priority }}">{{ t.priority }}</span></td>
-      <td><span class="badge {{ t.status }}">{{ t.status }}</span></td>
-      <td>{{ t.assignee.name if t.assignee else "—" }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% else %}
-  <p class="empty">No tasks scheduled for today.</p>
-  {% endif %}
-
-  <h2>Pending Tasks ({{ pending|length }})</h2>
-  {% if pending %}
-  <table>
-    <tr><th>Time</th><th>Title</th><th>Priority</th><th>Due Date</th><th>Assigned To</th></tr>
-    {% for t in pending %}
-    <tr>
-      <td class="time">{{ t.scheduled_time or "—" }}</td>
-      <td>{{ t.title }}</td>
-      <td><span class="badge {{ t.priority }}">{{ t.priority }}</span></td>
-      <td>{{ t.due_date if t.due_date else "—" }}</td>
-      <td>{{ t.assignee.name if t.assignee else "—" }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% else %}
-  <p class="empty">No pending tasks.</p>
-  {% endif %}
-
-  <div class="footer">
-    <p>Talentos v1.0 — Built for Simon Peter Chappell</p>
-  </div>
+{% extends "base.html" %}
+{% block title %}TalentOS — Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="stat-card"><h3>Open Jobs</h3><p>{{ stats.open_jobs }}</p></div>
+  <div class="stat-card"><h3>Total Jobs</h3><p>{{ stats.jobs }}</p></div>
+  <div class="stat-card"><h3>Applications</h3><p>{{ stats.applications }}</p></div>
+  <div class="stat-card"><h3>Companies</h3><p>{{ stats.companies }}</p></div>
+  <div class="stat-card"><h3>Users</h3><p>{{ stats.users }}</p></div>
 </div>
-</body>
-</html>
+
+<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+  <a href="/jobs/create" class="btn btn-primary">+ Post a Job</a>
+  <a href="/companies/create" class="btn btn-secondary">+ Add Company</a>
+</div>
+
+{% if my_jobs %}
+<div class="card">
+  <h3>My Job Postings</h3>
+  <table>
+    <tr><th>Title</th><th>Company</th><th>Status</th><th>Applications</th><th>Action</th></tr>
+    {% for j in my_jobs %}
+    <tr>
+      <td><a href="/jobs/{{ j.id }}" style="color:#58a6ff;text-decoration:none">{{ j.title }}</a></td>
+      <td>{{ j.company.name if j.company else '—' }}</td>
+      <td><span class="badge {{ j.status }}">{{ j.status }}</span></td>
+      <td>{{ j.applications|length }}</td>
+      <td><a href="/jobs/{{ j.id }}/edit" class="btn btn-secondary" style="padding:4px 10px;font-size:11px">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Recent Applications</h3>
+  {% if recent_apps %}
+  <table>
+    <tr><th>Job</th><th>Applicant</th><th>Status</th><th>Score</th><th>Date</th></tr>
+    {% for a in recent_apps %}
+    <tr>
+      <td><a href="/jobs/{{ a.job.id }}" style="color:#58a6ff;text-decoration:none">{{ a.job.title }}</a></td>
+      <td><a href="/profile/{{ a.applicant.id }}" style="color:#58a6ff;text-decoration:none">{{ a.applicant.name }}</a></td>
+      <td><span class="badge {{ a.status }}">{{ a.status }}</span></td>
+      <td>{{ a.score|int }}%</td>
+      <td>{{ a.created_at.strftime('%b %d') }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="empty">No applications yet</p>
+  {% endif %}
+</div>
+{% endblock %}

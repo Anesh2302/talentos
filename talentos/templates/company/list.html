@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Companies{% endblock %}
+{% block heading %}Companies{% endblock %}
+{% block content %}
+<div style="margin-bottom:16px"><a href="/companies/create" class="btn btn-primary">+ New Company</a></div>
+{% if companies %}
+<div class="grid">
+  {% for c in companies %}
+  <div class="card">
+    <h3><a href="/companies/{{ c.id }}" style="color:#58a6ff;text-decoration:none">{{ c.name }}</a></h3>
+    <p style="color:#8b949e;font-size:13px">{{ c.industry or '—' }} · {{ c.location or '—' }}</p>
+    <p style="color:#8b949e;font-size:12px;margin-top:8px">{{ c.description[:150] if c.description else '' }}</p>
+    <p style="margin-top:10px"><span style="color:#8b949e;font-size:12px">{{ c.jobs|length }} jobs</span></p>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">No companies yet. <a href="/companies/create" style="color:#58a6ff">Create one</a></p>
+{% endif %}
+{% endblock %}

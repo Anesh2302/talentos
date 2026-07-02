@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Edit Profile{% endblock %}
+{% block heading %}Edit Profile{% endblock %}
+{% block content %}
+<div class="card">
+  <form method="POST">
+    <div class="form-row">
+      <div><label for="name">Full Name</label><input type="text" id="name" name="name" value="{{ current_user.name }}" required></div>
+      <div><label for="headline">Headline</label><input type="text" id="headline" name="headline" value="{{ current_user.headline or '' }}" placeholder="e.g. Senior Software Engineer"></div>
+    </div>
+    <div class="form-row">
+      <div><label for="location">Location</label><input type="text" id="location" name="location" value="{{ current_user.location or '' }}" placeholder="City, Country"></div>
+      <div><label for="phone">Phone</label><input type="text" id="phone" name="phone" value="{{ current_user.phone or '' }}"></div>
+    </div>
+    <label for="profile_pic">Profile Picture URL</label>
+    <input type="url" id="profile_pic" name="profile_pic" value="{{ current_user.profile_pic or '' }}" placeholder="https://example.com/photo.jpg">
+    <label for="summary">Summary</label>
+    <textarea id="summary" name="summary" placeholder="Tell your story...">{{ current_user.summary or '' }}</textarea>
+    <label for="skills">Skills (comma separated)</label>
+    <input type="text" id="skills" name="skills" value="{{ current_user.skills|map(attribute='skill.name')|join(', ') }}" placeholder="Python, React, SQL">
+    <button type="submit" class="btn btn-primary">Save Profile</button>
+    <a href="/profile" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

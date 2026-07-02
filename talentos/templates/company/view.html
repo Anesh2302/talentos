@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — {{ company.name }}{% endblock %}
+{% block heading %}{{ company.name }}{% endblock %}
+{% block content %}
+<div class="card">
+  <p style="color:#8b949e;font-size:13px">{{ company.industry or '—' }} · {{ company.location or '—' }} · {{ company.size or '—' }}</p>
+  {% if company.website %}<p style="margin-top:6px"><a href="{{ company.website }}" target="_blank" style="color:#58a6ff;font-size:13px">{{ company.website }}</a></p>{% endif %}
+  <p style="margin-top:12px;color:#c9d1d9">{{ company.description }}</p>
+  {% if current_user.id == company.created_by %}
+  <div style="margin-top:16px">
+    <a href="/companies/{{ company.id }}/edit" class="btn btn-secondary">Edit</a>
+  </div>
+  {% endif %}
+</div>
+
+<h2 style="color:#f0883e;margin:20px 0 12px;font-size:18px">Open Positions ({{ company.jobs|selectattr('status','equalto','open')|list|length }})</h2>
+{% set open_jobs = company.jobs|selectattr('status','equalto','open')|list %}
+{% if open_jobs %}
+<table>
+  <tr><th>Title</th><th>Location</th><th>Type</th><th>Experience</th><th>Posted</th></tr>
+  {% for j in open_jobs %}
+  <tr>
+    <td><a href="/jobs/{{ j.id }}" style="color:#58a6ff;text-decoration:none">{{ j.title }}</a></td>
+    <td>{{ j.location or '—' }}</td>
+    <td>{{ j.job_type }}</td>
+    <td>{{ j.experience_level }}</td>
+    <td>{{ j.created_at.strftime('%b %d, %Y') }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No open positions at this company</p>
+{% endif %}
+{% endblock %}
