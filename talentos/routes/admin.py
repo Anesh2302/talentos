@@ -1,8 +1,12 @@
+import os
+import json as json_mod
 from functools import wraps
-from datetime import date
-from flask import Blueprint, jsonify, request, render_template
+from datetime import date, datetime
+from io import StringIO
+import csv
+from flask import Blueprint, jsonify, request, render_template, Response
 from flask_login import login_required, current_user
-from ..models import User, Candidate, Job, Todo
+from ..models import User, Candidate, Job, Todo, LoginHistory
 from .. import db
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -31,9 +35,32 @@ def dashboard():
         "total": Todo.query.count(),
         "pending": Todo.query.filter_by(status="pending").count(),
         "today": len(todos_today),
-        "blocked_ips": 0,
+        "users": User.query.count(),
+        "candidates": Candidate.query.count(),
+        "jobs": Job.query.count(),
     }
     return render_template("dashboard.html", todos=todos_today, pending=todos_pending, stats=stats)
+
+
+@bp.route("/security")
+@admin_required
+def security_dashboard():
+    recent_failures = LoginHistory.query.filter_by(success=False)\
+        .order_by(LoginHistory.timestamp.desc()).limit(100).all()
+    recent_logins = LoginHistory.query.filter_by(success=True)\
+        .order_by(LoginHistory.timestamp.desc()).limit(50).all()
+    blocked_ips_path = os.path.expanduser("~/.projectpop/blocked_ips.json")
+    blocked_ips = []
+    if os.path.exists(blocked_ips_path):
+        try:
+            with open(blocked_ips_path) as f:
+                blocked_ips = json_mod.load(f)
+        except Exception:
+            pass
+    return render_template("security.html",
+                           failures=recent_failures,
+                           logins=recent_logins,
+                           blocked_ips=blocked_ips)
 
 
 @bp.route("/users")
@@ -90,7 +117,39 @@ def _todo_json(t):
 @bp.route("/todos", methods=["GET"])
 @admin_required
 def list_todos():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    q = Todo.query
+
+    search = request.args.get("search", "")
+    if search:
+        q = q.filter(Todo.title.ilike(f"%{search}%"))
+
+    status = request.args.get("status", "")
+    if status:
+        q = q.filter(Todo.status == status)
+
+    priority = request.args.get("priority", "")
+    if priority:
+        q = q.filter(Todo.priority == priority)
+
+    assigned = request.args.get("assigned_to", "")
+    if assigned:
+        q = q.filter(Todo.assigned_to == int(assigned))
+
+    due_from = request.args.get("due_from", "")
+    if due_from:
+        try:
+            q = q.filter(Todo.due_date >= date.fromisoformat(due_from))
+        except (ValueError, TypeError):
+            pass
+
+    due_to = request.args.get("due_to", "")
+    if due_to:
+        try:
+            q = q.filter(Todo.due_date <= date.fromisoformat(due_to))
+        except (ValueError, TypeError):
+            pass
+
+    todos = q.order_by(Todo.created_at.desc()).all()
     return jsonify([_todo_json(t) for t in todos])
 
 
@@ -160,3 +219,62 @@ def delete_todo(todo_id):
     db.session.delete(todo)
     db.session.commit()
     return jsonify({"message": "Todo deleted"})
+
+
+@bp.route("/todos/export")
+@admin_required
+def export_todos():
+    todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    si = StringIO()
+    w = csv.writer(si)
+    w.writerow(["ID", "Title", "Description", "Status", "Priority",
+                 "Scheduled Time", "Due Date", "Reminder Sent",
+                 "Assigned To", "Created By", "Created At", "Updated At"])
+    for t in todos:
+        w.writerow([t.id, t.title, t.description, t.status, t.priority,
+                     t.scheduled_time, t.due_date, t.reminder_sent,
+                     t.assignee.name if t.assignee else "",
+                     t.creator.name if t.creator else "",
+                     t.created_at, t.updated_at])
+    return Response(si.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=todos.csv"})
+
+
+@bp.route("/candidates/export")
+@login_required
+def export_candidates():
+    candidates = Candidate.query.all()
+    si = StringIO()
+    w = csv.writer(si)
+    w.writerow(["ID", "Name", "Email", "Phone", "Status", "Skills", "Notes", "Created"])
+    for c in candidates:
+        w.writerow([c.id, c.name, c.email, c.phone, c.status, c.skills, c.notes, c.created_at])
+    return Response(si.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=candidates.csv"})
+
+
+@bp.route("/jobs/export")
+@login_required
+def export_jobs():
+    jobs = Job.query.all()
+    si = StringIO()
+    w = csv.writer(si)
+    w.writerow(["ID", "Title", "Description", "Department", "Location", "Status", "Created"])
+    for j in jobs:
+        w.writerow([j.id, j.title, j.description, j.department, j.location, j.status, j.created_at])
+    return Response(si.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=jobs.csv"})
+
+
+@bp.route("/login-history")
+@admin_required
+def all_login_history():
+    entries = LoginHistory.query.order_by(LoginHistory.timestamp.desc()).limit(200).all()
+    return jsonify([{
+        "id": e.id,
+        "email": e.email,
+        "ip": e.ip_address,
+        "user_agent": e.user_agent,
+        "success": e.success,
+        "timestamp": e.timestamp.isoformat(),
+    } for e in entries])
