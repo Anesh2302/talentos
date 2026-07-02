@@ -1,4 +1,6 @@
 import secrets
+import json
+import math
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from flask_login import login_user, logout_user, login_required, current_user
@@ -228,3 +230,75 @@ def generate_backup_codes():
         codes.append(code)
     db.session.commit()
     return jsonify({"message": "Backup codes generated", "codes": codes})
+
+
+def cosine_similarity(a, b):
+    dot = sum(x * y for x, y in zip(a, b))
+    na = math.sqrt(sum(x * x for x in a))
+    nb = math.sqrt(sum(x * x for x in b))
+    if na == 0 or nb == 0:
+        return 0
+    return dot / (na * nb)
+
+
+@bp.route("/face-login")
+def face_login_page():
+    return render_template("face_login.html")
+
+
+@bp.route("/face/enroll", methods=["POST"])
+@login_required
+def face_enroll():
+    data = request.get_json(force=True, silent=True)
+    if not data or "descriptor" not in data:
+        return jsonify({"error": "No face data provided"}), 400
+    current_user.face_descriptor = json.dumps(data["descriptor"])
+    current_user.face_image = data.get("image", "")
+    db.session.commit()
+    return jsonify({"message": "Face registered successfully"})
+
+
+@bp.route("/face/status")
+@login_required
+def face_status():
+    return jsonify({"enrolled": bool(current_user.face_descriptor)})
+
+
+@bp.route("/face/verify", methods=["POST"])
+def face_verify():
+    data = request.get_json(force=True, silent=True)
+    if not data or "descriptor" not in data:
+        return jsonify({"error": "No face data"}), 400
+    descriptor = data["descriptor"]
+    email = data.get("email", "").strip()
+    user = User.query.filter_by(email=email).first() if email else None
+    if not user or not user.face_descriptor:
+        return jsonify({"error": "No face registered for this account", "match": False})
+
+    stored = json.loads(user.face_descriptor)
+    score = cosine_similarity(descriptor, stored)
+    threshold = data.get("threshold", 0.5)
+    match = score >= threshold
+
+    if match:
+        return jsonify({"match": True, "score": round(score, 3), "user_id": user.id, "name": user.name})
+    return jsonify({"match": False, "score": round(score, 3)})
+
+
+@bp.route("/face/login", methods=["POST"])
+def face_login():
+    data = request.get_json(force=True, silent=True)
+    if not data or "descriptor" not in data or "email" not in data:
+        return jsonify({"error": "Missing face data or email"}), 400
+    descriptor = data["descriptor"]
+    user = User.query.filter_by(email=data["email"].strip()).first()
+    if not user or not user.face_descriptor:
+        return jsonify({"error": "No face registered", "match": False}), 401
+    stored = json.loads(user.face_descriptor)
+    score = cosine_similarity(descriptor, stored)
+    if score >= 0.5:
+        user.session_token = generate_session_token()
+        db.session.commit()
+        login_user(user)
+        return jsonify({"match": True, "message": "Face login successful", "user": user.name})
+    return jsonify({"match": False, "error": "Face does not match", "score": round(score, 3)}), 401

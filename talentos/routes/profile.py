@@ -43,6 +43,12 @@ def edit_profile():
     return render_template("profile/edit.html", active="profile")
 
 
+@bp.route("/face")
+@login_required
+def face_setup():
+    return render_template("profile/face.html", active="profile")
+
+
 @bp.route("/<int:user_id>")
 def public_profile(user_id):
     user = User.query.get_or_404(user_id)

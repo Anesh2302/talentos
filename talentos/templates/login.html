@@ -45,10 +45,28 @@
     <button type="submit">Sign In</button>
     <div class="loading" id="loading">Signing in...</div>
   </form>
-  <div class="link">Don't have an account? <a href="/auth/signup">Create one</a></div>
+  <div class="link" style="margin-bottom:8px">Don't have an account? <a href="/auth/signup">Create one</a></div>
+  <div class="link"><a href="/auth/face-login" id="faceLoginLink" style="color:#f0883e">Sign in with Face ID</a></div>
   <div class="footer">Talentos v1.0</div>
 </div>
+
+<div id="faceModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;align-items:center;justify-content:center">
+  <div class="card" style="width:420px;text-align:center;animation:fadeIn 0.3s ease-out">
+    <h3 style="margin-bottom:16px">Face Login</h3>
+    <input type="email" id="faceEmail" placeholder="Enter your email" style="margin-bottom:12px">
+    <video id="faceVideo" width="320" height="240" autoplay muted style="border-radius:8px;background:#000;width:100%;max-width:320px;margin:0 auto 12px"></video>
+    <div id="faceStatus" style="font-size:13px;color:#8b949e;margin-bottom:12px">Loading camera...</div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button id="faceVerifyBtn" class="btn btn-primary" disabled>Verify Face</button>
+      <button id="faceCloseBtn" class="btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
 <script>
+let faceModelsLoaded = false;
+
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const email = document.getElementById('email').value;
@@ -76,6 +94,82 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     errorEl.style.display = 'block';
   } finally {
     loadingEl.style.display = 'none';
+  }
+});
+
+// Face login modal
+document.getElementById('faceLoginLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('faceModal').style.display = 'flex';
+  startFaceCamera();
+});
+
+document.getElementById('faceCloseBtn').addEventListener('click', function() {
+  stopFaceCamera();
+  document.getElementById('faceModal').style.display = 'none';
+});
+
+let faceStream = null;
+async function startFaceCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+    faceStream = stream;
+    const video = document.getElementById('faceVideo');
+    video.srcObject = stream;
+    await video.play();
+    document.getElementById('faceStatus').textContent = 'Loading face model...';
+    await loadFaceModels();
+  } catch (err) {
+    document.getElementById('faceStatus').textContent = 'Camera error: ' + err.message;
+  }
+}
+
+function stopFaceCamera() {
+  if (faceStream) { faceStream.getTracks().forEach(t => t.stop()); faceStream = null; }
+}
+
+async function loadFaceModels() {
+  if (faceModelsLoaded) { document.getElementById('faceVerifyBtn').disabled = false; document.getElementById('faceStatus').textContent = 'Look at the camera and click Verify'; return; }
+  try {
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    faceModelsLoaded = true;
+    document.getElementById('faceVerifyBtn').disabled = false;
+    document.getElementById('faceStatus').textContent = 'Look at the camera and click Verify';
+  } catch (err) {
+    document.getElementById('faceStatus').textContent = 'Model load failed: ' + err.message;
+  }
+}
+
+document.getElementById('faceVerifyBtn').addEventListener('click', async function() {
+  const email = document.getElementById('faceEmail').value.trim();
+  if (!email) { document.getElementById('faceStatus').textContent = 'Please enter your email first.'; return; }
+  const video = document.getElementById('faceVideo');
+  const status = document.getElementById('faceStatus');
+  this.disabled = true;
+  status.textContent = 'Verifying face...';
+  try {
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceDescriptor();
+    if (!detection) { status.textContent = 'No face detected. Try again.'; this.disabled = false; return; }
+    const descriptor = Array.from(detection.descriptor);
+    const res = await fetch('/auth/face/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, descriptor })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      status.innerHTML = '<span style="color:#3fb950">✓ Face matched! Logging in...</span>';
+      setTimeout(() => { window.location.href = '/dashboard'; }, 500);
+    } else {
+      status.innerHTML = '<span style="color:#f85149">' + (data.error || 'Face not recognized') + '</span>';
+      this.disabled = false;
+    }
+  } catch (err) {
+    status.innerHTML = '<span style="color:#f85149">Error: ' + err.message + '</span>';
+    this.disabled = false;
   }
 });
 </script>

@@ -34,6 +34,8 @@ class User(UserMixin, db.Model):
     otp_secret = db.Column(db.String(32), default="")
     otp_enabled = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False)
+    face_descriptor = db.Column(db.Text, default="")
+    face_image = db.Column(db.Text, default="")
     login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
     session_token = db.Column(db.String(64), default="")

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Face Registration{% endblock %}
+{% block heading %}Face Recognition Setup{% endblock %}
+{% block content %}
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card" style="text-align:center">
+    <h3>Camera</h3>
+    <video id="video" width="320" height="240" autoplay muted style="border-radius:8px;background:#000;width:100%;max-width:320px"></video>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+      <button id="captureBtn" class="btn btn-primary" disabled>Capture Face</button>
+      <a href="/profile" class="btn btn-secondary">Back</a>
+    </div>
+    <div id="status" style="margin-top:12px;color:#8b949e;font-size:13px"></div>
+  </div>
+  <div class="card" style="text-align:center">
+    <h3>Preview</h3>
+    <canvas id="canvas" width="320" height="240" style="border-radius:8px;background:#0d1117;width:100%;max-width:320px"></canvas>
+    <div id="result" style="margin-top:12px;font-size:13px;font-weight:600"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
+<script>
+let faceDescriptor = null;
+let capturedImage = null;
+
+async function startCamera() {
+  const video = document.getElementById('video');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+    video.srcObject = stream;
+    await video.play();
+    document.getElementById('status').textContent = 'Camera ready. Loading face model...';
+    await loadModels();
+  } catch (err) {
+    document.getElementById('status').textContent = 'Camera access denied: ' + err.message;
+  }
+}
+
+async function loadModels() {
+  const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+  try {
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    document.getElementById('captureBtn').disabled = false;
+    document.getElementById('status').textContent = 'Model loaded. Look at the camera and click Capture.';
+  } catch (err) {
+    document.getElementById('status').textContent = 'Failed to load model: ' + err.message;
+  }
+}
+
+async function capture() {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+
+  canvas.getContext('2d').drawImage(video, 0, 0, 320, 240);
+  capturedImage = canvas.toDataURL('image/jpeg', 0.8);
+
+  status.textContent = 'Detecting face...';
+  try {
+    const detection = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceDescriptor();
+    if (!detection) {
+      result.innerHTML = '<span style="color:#f85149">No face detected. Try again.</span>';
+      status.textContent = 'Position your face clearly in the frame.';
+      return;
+    }
+    faceDescriptor = Array.from(detection.descriptor);
+    const box = detection.detection.box;
+    canvas.getContext('2d').strokeStyle = '#3fb950';
+    canvas.getContext('2d').lineWidth = 3;
+    canvas.getContext('2d').strokeRect(box.x, box.y, box.width, box.height);
+
+    const res = await fetch('/auth/face/enroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ descriptor: faceDescriptor, image: capturedImage })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      result.innerHTML = '<span style="color:#3fb950">✓ Face registered successfully!</span>';
+      status.textContent = 'You can now log in with your face.';
+    } else {
+      result.innerHTML = '<span style="color:#f85149">Error: ' + (data.error || 'Unknown') + '</span>';
+    }
+  } catch (err) {
+    result.innerHTML = '<span style="color:#f85149">Error: ' + err.message + '</span>';
+    status.textContent = 'Face detection failed.';
+  }
+}
+
+document.getElementById('captureBtn').addEventListener('click', capture);
+startCamera();
+</script>
+{% endblock %}

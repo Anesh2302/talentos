@@ -4,7 +4,7 @@
 {% block content %}
 <div class="card">
   <table>
-    <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>OTP</th><th>Logins</th><th>Joined</th><th>Actions</th></tr>
+    <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>OTP</th><th>Face</th><th>Logins</th><th>Joined</th><th>Actions</th></tr>
     {% for u in users %}
     <tr>
       <td>{{ u.id }}</td>
@@ -22,6 +22,11 @@
       </td>
       <td>{% if u.is_verified %}<span style="color:#3fb950">✓</span>{% else %}<span style="color:#f85149">✕</span>{% endif %}</td>
       <td>{% if u.otp_enabled %}<span style="color:#3fb950">✓</span>{% else %}—{% endif %}</td>
+      <td>
+        {% if u.face_descriptor %}
+        <a href="#" onclick="showFace({{ u.id }});return false" style="color:#3fb950;text-decoration:none">✓ View</a>
+        {% else %}—{% endif %}
+      </td>
       <td>{{ u.login_attempts }}</td>
       <td>{{ u.created_at.strftime('%b %d, %Y') }}</td>
       <td>
@@ -35,4 +40,38 @@
     {% endfor %}
   </table>
 </div>
+
+<div id="faceModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;align-items:center;justify-content:center">
+  <div class="card" style="width:400px;text-align:center;animation:fadeIn 0.3s ease-out">
+    <h3 id="faceModalTitle">Registered Face</h3>
+    <img id="faceModalImg" style="width:200px;height:200px;border-radius:50%;object-fit:cover;margin:16px auto;border:3px solid #58a6ff;display:none">
+    <div id="faceModalNoImg" style="padding:40px;color:#8b949e">Face enrolled (descriptor stored)</div>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+      <button onclick="document.getElementById('faceModal').style.display='none'" class="btn btn-secondary">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const faceImages = {{ users|selectattr('face_image')|map(attribute='face_image')|list|tojson|safe }};
+const userMap = {};
+{% for u in users if u.face_image %}
+userMap[{{ u.id }}] = {{ u.face_image|tojson|safe }};
+{% endfor %}
+
+function showFace(userId) {
+  const modal = document.getElementById('faceModal');
+  const img = document.getElementById('faceModalImg');
+  const noImg = document.getElementById('faceModalNoImg');
+  modal.style.display = 'flex';
+  if (userMap[userId]) {
+    img.src = userMap[userId];
+    img.style.display = 'block';
+    noImg.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    noImg.style.display = 'block';
+  }
+}
+</script>
 {% endblock %}
