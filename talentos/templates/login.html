@@ -140,7 +140,7 @@ function showOtpDialog(email, password, code) {
       else { document.getElementById('otpError').textContent = data.error || 'Invalid OTP'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
     } catch(err) { document.getElementById('otpError').textContent = 'Network error'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
   };
-  document.getElementById('otpCancelBtn').onclick = () => { overlay.style.animation = 'fadeIn 0.2s reverse'; setTimeout(()=>overlay.remove(), 200); };
+  document.getElementById('otpCancelBtn').onclick = () => { overlay.style.opacity = '0'; overlay.style.transition = 'opacity 0.2s'; setTimeout(()=>overlay.remove(), 200); };
 }
 </script>
 
@@ -212,7 +212,7 @@ function showFaceStep(email, token) {
       else { status.innerHTML = '<span style="color:#f85149">' + (data.error||'Login failed') + '</span>'; }
     } catch(e) { status.innerHTML = '<span style="color:#f85149">Error: ' + e.message + '</span>'; }
   };
-  document.getElementById('faceStepCancelBtn').onclick = () => { if(stream) stream.getTracks().forEach(t=>t.stop()); overlay.style.animation = 'fadeIn 0.2s reverse'; setTimeout(()=>overlay.remove(), 200); };
+  document.getElementById('faceStepCancelBtn').onclick = () => { if(stream) stream.getTracks().forEach(t=>t.stop()); overlay.style.opacity = '0'; overlay.style.transition = 'opacity 0.2s'; setTimeout(()=>overlay.remove(), 200); };
 }
 </script>
 </body>
