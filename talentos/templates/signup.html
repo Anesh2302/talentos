@@ -3,26 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Talentos — Sign Up</title>
+  <title>TalentOS — Sign Up</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: #c9d1d9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .card { background: linear-gradient(135deg, #161b22 0%, #1c2128 100%); border: 1px solid #30363d; border-radius: 16px; padding: 48px 40px; width: 400px; animation: fadeIn 0.6s ease-out; position: relative; overflow: hidden; }
-    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #58a6ff, #f0883e, #3fb950); }
-    h1 { color: #58a6ff; text-align: center; margin-bottom: 4px; font-size: 28px; text-shadow: 0 0 30px rgba(88,166,255,0.15); letter-spacing: 1px; }
-    h1::before { content: "◆ "; font-size: 18px; color: #f0883e; }
-    .subtitle { text-align: center; color: #8b949e; font-size: 14px; margin-bottom: 32px; }
-    label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; font-weight: 600; }
-    input, select { width: 100%; padding: 12px 14px; background: #0d1117; border: 2px solid #30363d; border-radius: 10px; color: #c9d1d9; font-size: 14px; margin-bottom: 20px; outline: none; transition: all 0.25s ease; }
-    input:focus, select:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); background: #161b22; }
-    button { width: 100%; padding: 12px; background: linear-gradient(135deg, #238636, #2ea043); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 2px 10px rgba(35,134,54,0.3); letter-spacing: 0.5px; }
-    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(35,134,54,0.4); }
+    .card { background: linear-gradient(135deg, #161b22 0%, #1c2128 100%); border: 1px solid #30363d; border-radius: 16px; padding: 48px 40px; width: 400px; animation: slideUp 0.6s ease-out; position: relative; overflow: hidden; }
+    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #58a6ff, #f0883e, #3fb950); background-size: 200% 100%; animation: shimmer 4s linear infinite; }
+    h1 { color: #58a6ff; text-align: center; margin-bottom: 4px; font-size: 28px; animation: fadeIn 0.8s ease-out; }
+    h1::before { content: "◆ "; font-size: 18px; color: #f0883e; animation: pulse 2s infinite; }
+    .subtitle { text-align: center; color: #8b949e; font-size: 14px; margin-bottom: 32px; animation: fadeIn 1s ease-out; }
+    label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; font-weight: 600; animation: fadeIn 1.2s ease-out; }
+    input, select { width: 100%; padding: 12px 14px; background: #0d1117; border: 2px solid #30363d; border-radius: 10px; color: #c9d1d9; font-size: 14px; margin-bottom: 20px; outline: none; transition: all 0.3s ease; }
+    input:focus, select:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15), 0 0 20px rgba(88,166,255,0.1); transform: translateY(-1px); background: #161b22; }
+    button { width: 100%; padding: 12px; background: linear-gradient(135deg, #238636, #2ea043); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 10px rgba(35,134,54,0.3); animation: fadeIn 1.4s ease-out; }
+    button:hover { transform: translateY(-3px); box-shadow: 0 6px 25px rgba(35,134,54,0.4); }
+    button:active { transform: translateY(0); }
     .error { background: linear-gradient(135deg, #3a1c1c, #4a1c1c); color: #f85149; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: none; border: 1px solid #6a2d2d; animation: fadeIn 0.3s ease-out; }
     .loading { display: none; text-align: center; color: #8b949e; font-size: 13px; margin-top: 12px; }
     .loading::before { content: ""; display: inline-block; width: 18px; height: 18px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
-    .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #484f58; }
+    .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #484f58; animation: fadeIn 2s ease-out; }
     .link { text-align: center; margin-top: 20px; font-size: 13px; }
     .link a { color: #58a6ff; text-decoration: none; transition: color 0.2s; }
     .link a:hover { color: #f0883e; text-decoration: underline; }
@@ -30,7 +34,7 @@
 </head>
 <body>
 <div class="card">
-  <h1>Talentos</h1>
+  <h1>TalentOS</h1>
   <p class="subtitle">Create your account</p>
   <div class="error" id="error"></div>
   <form id="signupForm">
@@ -50,7 +54,7 @@
     <div class="loading" id="loading">Creating account...</div>
   </form>
   <div class="link">Already have an account? <a href="/auth/login">Sign in</a></div>
-  <div class="footer">Talentos v1.0</div>
+  <div class="footer">TalentOS v2.0</div>
 </div>
 <script>
 document.getElementById('signupForm').addEventListener('submit', async function(e) {

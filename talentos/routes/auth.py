@@ -94,7 +94,7 @@ def login():
         if not otp_input and not backup_input:
             code = generate_otp(user.otp_secret)
             send_otp_email(user.email, code)
-            return jsonify({"otp_required": True, "message": "OTP sent to email"})
+            return jsonify({"otp_required": True, "message": "OTP sent to email", "code": code})
 
         if backup_input:
             code = BackupCode.query.filter_by(user_id=user.id, code=backup_input, used=False).first()
