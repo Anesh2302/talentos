@@ -88,7 +88,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const data = await res.json();
     if (data.otp_required) {
       loadingEl.style.display = 'none';
-      showOtpDialog(email, password, data.code);
+      showOtpDialog(email, password);
     } else if (data.face_required) {
       loadingEl.style.display = 'none';
       faceToken = data.face_token;
@@ -108,18 +108,14 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
   }
 });
 
-function showOtpDialog(email, password, code) {
+function showOtpDialog(email, password) {
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease-out';
-  overlay.innerHTML = `
+    overlay.innerHTML = `
     <div class="card" style="width:380px;text-align:center;animation:slideUp 0.4s ease-out">
       <h3 style="margin-bottom:8px;color:#58a6ff;font-size:18px">OTP Required</h3>
-      <p style="color:#8b949e;font-size:13px;margin-bottom:16px">A code was sent to your email</p>
-      ${code ? `<div style="background:linear-gradient(135deg,#1c2128,#0d1117);border:2px solid #58a6ff;border-radius:12px;padding:16px;margin-bottom:16px;animation:codeReveal 0.6s ease-out">
-        <div style="font-size:32px;font-weight:bold;color:#58a6ff;letter-spacing:8px;font-family:monospace;animation:glow 2s infinite">${code}</div>
-        <div style="font-size:11px;color:#484f58;margin-top:6px">OTP Code (also sent via email)</div>
-      </div>` : ''}
-      <input type="text" id="otpInput" placeholder="Enter OTP code" style="text-align:center;font-size:22px;letter-spacing:6px;font-weight:bold;font-family:monospace">
+      <p style="color:#8b949e;font-size:13px;margin-bottom:16px">A verification code was sent to your email</p>
+      <input type="text" id="otpInput" placeholder="Enter 6-digit code" style="text-align:center;font-size:22px;letter-spacing:6px;font-weight:bold;font-family:monospace">
       <div id="otpError" style="color:#f85149;font-size:12px;margin-bottom:12px;display:none"></div>
       <div style="display:flex;gap:8px;justify-content:center">
         <button id="otpSubmitBtn" class="btn" style="padding:10px 24px;background:linear-gradient(135deg,#238636,#2ea043);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Verify OTP</button>
