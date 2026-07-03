@@ -1,5 +1,3 @@
-import os
-import json as json_mod
 from functools import wraps
 from datetime import datetime
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for
@@ -33,14 +31,13 @@ def security_dashboard():
         .order_by(LoginHistory.timestamp.desc()).limit(100).all()
     recent_logins = LoginHistory.query.filter_by(success=True)\
         .order_by(LoginHistory.timestamp.desc()).limit(50).all()
-    blocked_ips_path = os.path.expanduser("~/.projectpop/blocked_ips.json")
-    blocked_ips = []
-    if os.path.exists(blocked_ips_path):
-        try:
-            with open(blocked_ips_path) as f:
-                blocked_ips = json_mod.load(f)
-        except Exception:
-            pass
+    from sqlalchemy import func
+    blocked = db.session.query(LoginHistory.ip_address, func.count(LoginHistory.id).label('attempts'))\
+        .filter(LoginHistory.success == False, LoginHistory.ip_address.isnot(None))\
+        .group_by(LoginHistory.ip_address)\
+        .order_by(func.count(LoginHistory.id).desc())\
+        .limit(50).all()
+    blocked_ips = [{"ip": ip, "attempts": n} for ip, n in blocked]
     return render_template("security.html",
                            failures=recent_failures,
                            logins=recent_logins,

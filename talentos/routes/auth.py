@@ -132,7 +132,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return jsonify({"message": "Logged out"})
+    return redirect(url_for("auth.login_page"))
 
 
 @bp.route("/setup-otp", methods=["POST"])

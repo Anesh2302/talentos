@@ -49,12 +49,12 @@
   <h2>Blocked IPs</h2>
   {% if blocked_ips %}
   <table>
-    <tr><th>IP</th><th>Reason</th><th>Status</th></tr>
-    {% for ip in blocked_ips %}
+    <tr><th>IP</th><th>Failed Attempts</th><th>Status</th></tr>
+    {% for item in blocked_ips %}
     <tr>
-      <td>{{ ip.ip if ip.ip else ip }}</td>
-      <td>{{ ip.get('type', 'Auto-blocked') if ip is mapping else '—' }}</td>
-      <td><span class="badge blocked">Blocked</span></td>
+      <td>{{ item.ip }}</td>
+      <td>{{ item.attempts }}</td>
+      <td><span class="badge blocked">Flagged</span></td>
     </tr>
     {% endfor %}
   </table>
