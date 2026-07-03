@@ -86,16 +86,16 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (res.ok) {
-      const params = new URLSearchParams(window.location.search);
-      window.location.href = params.get('next') || '/dashboard';
-    } else if (data.otp_required) {
+    if (data.otp_required) {
       loadingEl.style.display = 'none';
       showOtpDialog(email, password, data.code);
     } else if (data.face_required) {
       loadingEl.style.display = 'none';
       faceToken = data.face_token;
       showFaceStep(email, data.face_token);
+    } else if (res.ok) {
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get('next') || '/dashboard';
     } else {
       errorEl.textContent = data.error || data.message || 'Login failed';
       errorEl.style.display = 'block';
@@ -135,8 +135,8 @@ function showOtpDialog(email, password, code) {
     try {
       const res = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password,otp}) });
       const data = await res.json();
-      if (res.ok) { window.location.href = '/dashboard'; }
-      else if (data.face_required) { faceToken = data.face_token; overlay.remove(); showFaceStep(email, data.face_token); }
+      if (data.face_required) { faceToken = data.face_token; overlay.remove(); showFaceStep(email, data.face_token); }
+      else if (res.ok) { window.location.href = '/dashboard'; }
       else { document.getElementById('otpError').textContent = data.error || 'Invalid OTP'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
     } catch(err) { document.getElementById('otpError').textContent = 'Network error'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
   };
