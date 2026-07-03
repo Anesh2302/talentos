@@ -87,28 +87,31 @@ def login():
         user.is_verified = True
         db.session.commit()
 
-    if user.otp_enabled:
-        otp_input = data.get("otp")
-        backup_input = data.get("backup_code")
+    if not user.otp_secret:
+        user.otp_secret = generate_secret()
+        db.session.commit()
 
-        if not otp_input and not backup_input:
-            code = generate_otp(user.otp_secret)
-            send_otp_email(user.email, code)
-            return jsonify({"otp_required": True, "message": "OTP sent to email", "code": code})
+    otp_input = data.get("otp")
+    backup_input = data.get("backup_code")
 
-        if backup_input:
-            code = BackupCode.query.filter_by(user_id=user.id, code=backup_input, used=False).first()
-            if not code:
-                user.record_failed_login()
-                _record_login(user.email, False, user.id)
-                db.session.commit()
-                return jsonify({"error": "Invalid backup code"}), 401
-            code.used = True
-        elif not verify_otp(user.otp_secret, otp_input):
+    if not otp_input and not backup_input:
+        code = generate_otp(user.otp_secret)
+        send_otp_email(user.email, code)
+        return jsonify({"otp_required": True, "message": "OTP sent to email", "code": code})
+
+    if backup_input:
+        code = BackupCode.query.filter_by(user_id=user.id, code=backup_input, used=False).first()
+        if not code:
             user.record_failed_login()
             _record_login(user.email, False, user.id)
             db.session.commit()
-            return jsonify({"error": "Invalid OTP"}), 401
+            return jsonify({"error": "Invalid backup code"}), 401
+        code.used = True
+    elif not verify_otp(user.otp_secret, otp_input):
+        user.record_failed_login()
+        _record_login(user.email, False, user.id)
+        db.session.commit()
+        return jsonify({"error": "Invalid OTP"}), 401
 
     user.login_attempts = 0
 
