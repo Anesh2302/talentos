@@ -47,10 +47,17 @@ def view_conversation(id):
         .order_by(Message.created_at.asc())
         .all()
     )
+    other_participant = (
+        User.query
+        .join(ConversationParticipant)
+        .filter(ConversationParticipant.conversation_id == id, User.id != current_user.id)
+        .first()
+    )
     return render_template(
         "messages/chat.html",
         conversation=conversation,
         messages=messages,
+        other=other_participant,
         active="messages",
     )
 
@@ -127,3 +134,30 @@ def new_conversation(user_id):
         recipient=recipient,
         active="messages",
     )
+
+
+@bp.route("/start/<int:user_id>", methods=["POST"])
+@login_required
+def start_or_find_conversation(user_id):
+    if user_id == current_user.id:
+        return jsonify({"error": "Cannot chat with yourself"}), 400
+    recipient = User.query.get_or_404(user_id)
+    my_conv_ids = [p.conversation_id for p in ConversationParticipant.query.filter_by(user_id=current_user.id).all()]
+    for cid in my_conv_ids:
+        other = ConversationParticipant.query.filter_by(conversation_id=cid, user_id=user_id).first()
+        if other:
+            participants_count = ConversationParticipant.query.filter_by(conversation_id=cid).count()
+            if participants_count == 2:
+                return jsonify({"redirect": url_for("messages.view_conversation", id=cid)})
+    conversation = Conversation(
+        subject=f"Chat with {recipient.name}",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    db.session.add(conversation)
+    db.session.flush()
+    for uid in (current_user.id, user_id):
+        participant = ConversationParticipant(conversation_id=conversation.id, user_id=uid)
+        db.session.add(participant)
+    db.session.commit()
+    return jsonify({"redirect": url_for("messages.view_conversation", id=conversation.id)})

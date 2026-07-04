@@ -1,25 +1,43 @@
 {% extends "base.html" %}
-{% block title %}TalentOS — Messages{% endblock %}
-{% block heading %}Messages{% endblock %}
+{% block title %}Messages — TalentOS{% endblock %}
+{% block heading %}
+<div style="display:flex;align-items:center;justify-content:space-between">
+  <span>Messages</span>
+</div>
+{% endblock %}
 {% block content %}
+<style>
+  .conv-card { display:flex; align-items:center; gap:14px; background:#161b22; border:1px solid #30363d; border-radius:12px; padding:14px 18px; margin-bottom:10px; cursor:pointer; transition:all 0.2s; }
+  .conv-card:hover { border-color:#58a6ff; background:#1c2128; }
+  .conv-avatar { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#58a6ff,#f0883e); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:16px; flex-shrink:0; }
+  .conv-info { flex:1; min-width:0; }
+  .conv-name { color:#f0f6fc; font-weight:600; font-size:14px; }
+  .conv-preview { color:#8b949e; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+  .conv-meta { text-align:right; flex-shrink:0; }
+  .conv-time { color:#484f58; font-size:11px; }
+  .conv-badge { background:#238636; color:#fff; font-size:11px; border-radius:10px; padding:2px 8px; margin-top:4px; display:inline-block; }
+</style>
+
 {% if conversations %}
 {% for c in conversations %}
-<div class="card" style="cursor:pointer" onclick="window.location='/messages/{{ c.id }}'">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <div>
-      <strong style="color:#f0f6fc">{{ c.subject or 'Conversation' }}</strong>
-      <p style="color:#8b949e;font-size:12px;margin-top:4px">
-        {% for p in c.participants %}
-          {% if p.user_id != current_user.id %}{{ p.user.name }}{% endif %}
-        {% endfor %}
-        · {{ c.messages|length }} messages
-      </p>
-    </div>
-    <span style="color:#8b949e;font-size:12px">{{ c.updated_at.strftime('%b %d') }}</span>
+{% set other = c.participants|selectattr("user_id","!=",current_user.id)|map(attribute="user")|first %}
+{% set last_msg = c.messages|sort(attribute="created_at",reverse=True)|first %}
+<div class="conv-card" onclick="window.location='/messages/{{ c.id }}'">
+  <div class="conv-avatar">{{ (other.name[0] if other else '?') }}</div>
+  <div class="conv-info">
+    <div class="conv-name">{{ other.name if other else c.subject }}</div>
+    <div class="conv-preview">{{ last_msg.content[:60] if last_msg else 'No messages yet' }}</div>
+  </div>
+  <div class="conv-meta">
+    <div class="conv-time">{{ c.updated_at.strftime('%b %d') }}</div>
   </div>
 </div>
 {% endfor %}
 {% else %}
-<p class="empty">No conversations yet. Start one from a job or profile page.</p>
+<div style="text-align:center;padding:60px 20px;">
+  <div style="font-size:48px;margin-bottom:16px;color:#30363d;">💬</div>
+  <p class="empty" style="margin-bottom:12px;">No conversations yet</p>
+  <p style="color:#8b949e;font-size:13px;">Go to the <a href="/social/users" style="color:#58a6ff;">Network</a> page to start chatting with people</p>
+</div>
 {% endif %}
 {% endblock %}

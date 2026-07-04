@@ -16,6 +16,8 @@
   .follow-btn.following:hover { background: #3a1c1c; color: #f85149; border-color: #f85149; }
   .follow-btn.not-following { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; }
   .follow-btn.not-following:hover { transform: translateY(-1px); }
+  .chat-btn { padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #30363d; background: transparent; color: #c9d1d9; transition: all 0.2s; margin-left:8px; }
+  .chat-btn:hover { border-color: #58a6ff; color: #58a6ff; transform: translateY(-1px); }
 </style>
 
 {% for u in users %}
@@ -25,9 +27,12 @@
     <a href="/social/user/{{ u.id }}" class="user-name">{{ u.name }}</a>
     <div class="user-headline">{{ u.headline or u.role|capitalize }}</div>
   </div>
-  <button class="follow-btn {{ 'following' if u.id in following_ids else 'not-following' }}" onclick="toggleFollow({{ u.id }})">
-    {{ 'Following' if u.id in following_ids else 'Follow' }}
-  </button>
+  <div style="display:flex;gap:0;">
+    <button class="follow-btn {{ 'following' if u.id in following_ids else 'not-following' }}" onclick="toggleFollow({{ u.id }})">
+      {{ 'Following' if u.id in following_ids else 'Follow' }}
+    </button>
+    <button class="chat-btn" onclick="startChat({{ u.id }})">💬 Chat</button>
+  </div>
 </div>
 {% endfor %}
 {% if not users %}
@@ -38,6 +43,10 @@
 function toggleFollow(userId) {
   fetch('/social/user/'+userId+'/follow', { method:'POST' })
     .then(r=>r.json()).then(d=>{ location.reload(); });
+}
+function startChat(userId) {
+  fetch('/messages/start/'+userId, { method:'POST' })
+    .then(r=>r.json()).then(d=>{ if(d.redirect) window.location=d.redirect; });
 }
 </script>
 {% endblock %}

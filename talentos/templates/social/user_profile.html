@@ -19,10 +19,11 @@
   <div class="profile-meta">
     <div class="profile-name">{{ user.name }}</div>
     <div class="profile-headline">{{ user.headline or user.role|capitalize }}</div>
-    <div style="margin-top:8px;">
+    <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="btn {{ 'btn-secondary' if is_following else 'btn-primary' }}" onclick="toggleFollow({{ user.id }})" style="border-radius:20px;">
         {{ 'Following' if is_following else 'Follow' }}
       </button>
+      <button class="btn btn-secondary" onclick="startChat({{ user.id }})" style="border-radius:20px;">💬 Chat</button>
     </div>
     <div class="profile-stats">
       <div class="profile-stat"><div class="profile-stat-num">{{ follower_count }}</div><div class="profile-stat-label">Followers</div></div>
@@ -48,6 +49,10 @@
 function toggleFollow(userId) {
   fetch('/social/user/'+userId+'/follow', { method:'POST' })
     .then(r=>r.json()).then(d=>{ location.reload(); });
+}
+function startChat(userId) {
+  fetch('/messages/start/'+userId, { method:'POST' })
+    .then(r=>r.json()).then(d=>{ if(d.redirect) window.location=d.redirect; });
 }
 </script>
 {% endblock %}
