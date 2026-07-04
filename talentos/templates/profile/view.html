@@ -2,15 +2,48 @@
 {% block title %}TalentOS — Profile{% endblock %}
 {% block heading %}Your Profile{% endblock %}
 {% block content %}
+{% set completeness = namespace(score=0) %}
+{% if current_user.name %}{% set completeness.score = completeness.score + 1 %}{% endif %}
+{% if current_user.headline %}{% set completeness.score = completeness.score + 1 %}{% endif %}
+{% if current_user.summary %}{% set completeness.score = completeness.score + 1 %}{% endif %}
+{% if current_user.location %}{% set completeness.score = completeness.score + 1 %}{% endif %}
+{% if current_user.phone %}{% set completeness.score = completeness.score + 1 %}{% endif %}
+{% if current_user.profile_pic or current_user.profile_pic_data %}{% set completeness.score = completeness.score + 1 %}{% endif %}
+{% if current_user.skills and current_user.skills|length > 0 %}{% set completeness.score = completeness.score + 1 %}{% endif %}
+{% set pct = (completeness.score / 7 * 100)|int %}
+
+<div class="card" style="margin-bottom:16px;padding:12px 24px;display:flex;align-items:center;gap:16px">
+  <div style="flex:1">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px">
+      <span>Profile Completeness</span><span>{{ pct }}%</span>
+    </div>
+    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:{{ pct }}%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:3px;transition:width 0.5s ease"></div>
+    </div>
+  </div>
+  <a href="/profile/edit" class="btn btn-secondary" style="padding:6px 14px;font-size:12px">Complete Profile</a>
+</div>
+
 <div class="grid" style="grid-template-columns:1fr 2fr">
   <div class="card" style="text-align:center">
-    <div style="width:100px;height:100px;border-radius:50%;background:#1c2128;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:40px;color:#58a6ff;overflow:hidden">
-      {% if current_user.profile_pic %}<img src="{{ current_user.profile_pic }}" style="width:100%;height:100%;object-fit:cover">{% else %}{{ current_user.name[0] }}{% endif %}
+    <div style="width:100px;height:100px;border-radius:50%;background:var(--bg3);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--accent);overflow:hidden">
+      {% if current_user.profile_pic_data %}<img src="data:image/jpeg;base64,{{ current_user.profile_pic_data }}" style="width:100%;height:100%;object-fit:cover">
+      {% elif current_user.profile_pic %}<img src="{{ current_user.profile_pic }}" style="width:100%;height:100%;object-fit:cover">
+      {% else %}{{ current_user.name[0] }}{% endif %}
     </div>
-    <h2 style="color:#f0f6fc;font-size:18px">{{ current_user.name }}</h2>
-    <p style="color:#8b949e;font-size:13px;margin-top:4px">{{ current_user.headline or '' }}</p>
-    <p style="color:#484f58;font-size:12px;margin-top:8px">{{ current_user.email }} · {{ current_user.role }}</p>
-    <p style="color:#484f58;font-size:12px">{{ current_user.location or '' }}</p>
+    <h2 style="color:var(--text);font-size:18px">{{ current_user.name }}</h2>
+    <p style="color:var(--text2);font-size:13px;margin-top:4px">{{ current_user.headline or '' }}</p>
+    <p style="color:var(--text3);font-size:12px;margin-top:8px">{{ current_user.email }} · {{ current_user.role }}</p>
+    <p style="color:var(--text3);font-size:12px">{{ current_user.location or '' }}</p>
+    {% if current_user.phone %}<p style="color:var(--text3);font-size:12px">{{ current_user.phone }}</p>{% endif %}
+    <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      {% if current_user.linkedin %}<a href="{{ current_user.linkedin }}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none">LinkedIn</a>{% endif %}
+      {% if current_user.github %}<a href="{{ current_user.github }}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none">GitHub</a>{% endif %}
+      {% if current_user.website %}<a href="{{ current_user.website }}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none">Website</a>{% endif %}
+    </div>
+    {% if current_user.default_resume_data %}
+    <div style="margin-top:8px"><a href="/profile/resume/download" style="color:var(--green);font-size:12px;text-decoration:none">📄 Download Default Resume</a></div>
+    {% endif %}
     <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <a href="/profile/edit" class="btn btn-secondary">Edit Profile</a>
       <a href="/profile/face" class="btn btn-secondary">Setup Face Login</a>
@@ -20,7 +53,7 @@
     {% if current_user.summary %}
     <div class="card">
       <h3>Summary</h3>
-      <p style="color:#c9d1d9;line-height:1.6">{{ current_user.summary }}</p>
+      <p style="color:var(--text);line-height:1.6">{{ current_user.summary }}</p>
     </div>
     {% endif %}
     <div class="card">
@@ -39,7 +72,7 @@
     {% if current_user.company %}
     <div class="card">
       <h3>Company</h3>
-      <p><a href="/companies/{{ current_user.company.id }}" style="color:#58a6ff;text-decoration:none">{{ current_user.company.name }}</a></p>
+      <p><a href="/companies/{{ current_user.company.id }}" style="color:var(--accent);text-decoration:none">{{ current_user.company.name }}</a></p>
     </div>
     {% endif %}
   </div>

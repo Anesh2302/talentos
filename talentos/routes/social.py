@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from flask_login import login_required, current_user
-from ..models import db, Post, PostLike, Comment, Follow, User
+from ..models import db, Post, PostLike, Comment, Follow, User, ActivityLog
+from datetime import datetime
 
 bp = Blueprint("social", __name__, url_prefix="/social")
 
@@ -106,3 +107,10 @@ def user_profile(user_id):
     is_following = Follow.query.filter_by(follower_id=current_user.id, followed_id=user_id).first() is not None
     return render_template("social/user_profile.html", user=user, posts=posts,
         follower_count=follower_count, following_count=following_count, is_following=is_following, active="social")
+
+
+@bp.route("/activity")
+@login_required
+def activity():
+    activities = ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(50).all()
+    return render_template("social/activity.html", activities=activities, active="activity")

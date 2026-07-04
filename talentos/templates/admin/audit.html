@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Audit Log{% endblock %}
+{% block heading %}Audit Log{% endblock %}
+{% block content %}
+<div class="card">
+  {% if entries %}
+  <table>
+    <tr><th>Time</th><th>User</th><th>Action</th><th>Target</th><th>Details</th></tr>
+    {% for e in entries %}
+    <tr>
+      <td style="font-size:11px;color:#484f58">{{ e.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ e.user.name if e.user else 'System' }}</td>
+      <td><span class="badge" style="background:#30363d;color:#c9d1d9">{{ e.action }}</span></td>
+      <td style="font-size:12px">{{ e.target_type }} #{{ e.target_id }}</td>
+      <td style="font-size:12px;color:#8b949e;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.details[:100] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="empty">No audit log entries</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TalentOS — Alternative Verification</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg1: #0d1117; --bg2: #161b22; --text: #c9d1d9; --text2: #8b949e; --text3: #484f58; --border: #30363d; --accent: #58a6ff; --orange: #f0883e; --green: #3fb950; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes drift { 0% { transform: translate(0,0); } 25% { transform: translate(40px,-30px); } 50% { transform: translate(-30px,40px); } 75% { transform: translate(20px,-20px); } 100% { transform: translate(0,0); } }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .bg-orbs { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-orbs .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12; animation: drift 25s ease-in-out infinite; }
+    .bg-orbs .orb:nth-child(1) { width: 500px; height: 500px; background: var(--accent); top: -150px; left: -150px; }
+    .bg-orbs .orb:nth-child(2) { width: 350px; height: 350px; background: var(--orange); bottom: -100px; right: -100px; animation-delay: -8s; }
+    .bg-orbs .orb:nth-child(3) { width: 200px; height: 200px; background: var(--green); top: 50%; left: 60%; animation-delay: -15s; }
+    .card { background: rgba(22,27,34,0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(48,54,61,0.4); border-radius: 16px; padding: 40px; width: 440px; max-width: 92vw; animation: slideUp 0.6s ease-out; position: relative; overflow: hidden; z-index: 1; text-align: center; }
+    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--orange), var(--green)); background-size: 200% 100%; animation: shimmer 4s linear infinite; }
+    h1 { color: var(--accent); margin-bottom: 4px; font-size: 24px; animation: fadeIn 0.8s ease-out; }
+    .subtitle { color: var(--text2); font-size: 14px; margin-bottom: 24px; animation: fadeIn 1s ease-out; }
+    .option { background: rgba(13,17,23,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; text-align: left; animation: fadeIn 0.6s ease-out; transition: border-color 0.3s; }
+    .option:hover { border-color: var(--accent); }
+    .option h3 { font-size: 15px; color: var(--accent); margin-bottom: 4px; }
+    .option p { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+    input { width: 100%; padding: 10px 14px; background: rgba(13,17,23,0.6); border: 2px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; outline: none; transition: all 0.3s; margin-bottom: 10px; }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88,166,255,0.15); }
+    button { padding: 10px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    button:hover { transform: translateY(-2px); }
+    .btn-primary { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; }
+    .btn-primary:hover { box-shadow: 0 4px 20px rgba(35,134,54,0.4); }
+    .btn-secondary { background: rgba(33,38,45,0.8); color: var(--text); border: 1px solid var(--border); }
+    .status { font-size: 13px; color: var(--text2); margin-top: 8px; min-height: 18px; }
+    .error { color: #f85149; font-size: 12px; margin-top: 6px; display: none; }
+    .link { text-align: center; margin-top: 16px; font-size: 13px; }
+    .link a { color: var(--accent); text-decoration: none; }
+    .link a:hover { color: var(--orange); text-decoration: underline; }
+    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: var(--text3); }
+    @media (max-width: 768px) {
+      body { align-items: flex-start; padding-top: 32px; }
+    }
+    @media (max-width: 480px) {
+      .card { padding: 20px 14px; max-width: 96vw; }
+      h1 { font-size: 18px; }
+      .subtitle { font-size: 12px; }
+      .option { padding: 14px; }
+      button { padding: 12px 14px; font-size: 13px; }
+      input { padding: 8px 12px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+  <div class="card">
+    <h1>TalentOS</h1>
+    <p class="subtitle">Choose an alternative verification method</p>
+
+    <div class="option">
+      <h3>Verify via OTP</h3>
+      <p>A code will be sent to your registered email</p>
+      <div id="otpSection">
+        <button id="sendOtpBtn" class="btn-primary">Send OTP</button>
+        <div id="otpVerifySection" style="display:none;margin-top:10px">
+          <input type="text" id="otpInput" placeholder="Enter 6-digit code" style="text-align:center;font-size:20px;letter-spacing:4px;font-family:monospace;margin-bottom:8px">
+          <button id="verifyOtpBtn" class="btn-primary">Verify OTP</button>
+        </div>
+      </div>
+      <div class="status" id="otpStatus"></div>
+      <div class="error" id="otpError"></div>
+    </div>
+
+    <div class="option">
+      <h3>Upload Photo ID</h3>
+      <p>Upload a photo for manual verification</p>
+      <form id="photoForm" enctype="multipart/form-data">
+        <input type="file" id="photoInput" accept="image/*" style="margin-bottom:8px">
+        <button type="submit" class="btn-primary">Upload & Login</button>
+      </form>
+      <div class="status" id="photoStatus"></div>
+      <div class="error" id="photoError"></div>
+    </div>
+
+    <div class="link"><a href="/auth/verify-face">← Back to Face Verification</a></div>
+    <div class="link"><a href="/auth/skip-all">Skip all, log in anyway</a></div>
+    <div class="footer">TalentOS v2.0</div>
+  </div>
+  <script>
+    let otpSection = document.getElementById('otpSection');
+    let sendOtpBtn = document.getElementById('sendOtpBtn');
+    let otpVerifySection = document.getElementById('otpVerifySection');
+    let otpInput = document.getElementById('otpInput');
+    let verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    let otpStatus = document.getElementById('otpStatus');
+    let otpError = document.getElementById('otpError');
+
+    {% if otp_sent %}
+    otpVerifySection.style.display = 'block';
+    sendOtpBtn.style.display = 'none';
+    otpStatus.textContent = 'OTP sent to your email';
+    {% endif %}
+
+    sendOtpBtn.addEventListener('click', async function() {
+      this.disabled = true;
+      otpStatus.textContent = 'Sending...';
+      otpError.style.display = 'none';
+      try {
+        const res = await fetch('/auth/skip-alternatives/otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ send: true })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          sendOtpBtn.style.display = 'none';
+          otpVerifySection.style.display = 'block';
+          otpStatus.textContent = 'OTP sent to your email';
+        } else {
+          otpError.textContent = data.error || 'Failed to send OTP';
+          otpError.style.display = 'block';
+          this.disabled = false;
+        }
+      } catch(e) {
+        otpError.textContent = 'Network error';
+        otpError.style.display = 'block';
+        this.disabled = false;
+      }
+    });
+
+    verifyOtpBtn.addEventListener('click', async function() {
+      const otp = otpInput.value.trim();
+      if (!otp) return;
+      this.disabled = true;
+      otpStatus.textContent = 'Verifying...';
+      try {
+        const res = await fetch('/auth/skip-alternatives/otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ otp })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          otpStatus.innerHTML = '<span style="color:#3fb950">✓ Verified! Redirecting...</span>';
+          setTimeout(() => window.location.href = data.redirect || '/dashboard', 500);
+        } else {
+          otpError.textContent = data.error || 'Invalid OTP';
+          otpError.style.display = 'block';
+          this.disabled = false;
+        }
+      } catch(e) {
+        otpError.textContent = 'Network error';
+        otpError.style.display = 'block';
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById('photoForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('photoInput');
+      if (!fileInput.files.length) return;
+      const formData = new FormData();
+      formData.append('photo', fileInput.files[0]);
+      const status = document.getElementById('photoStatus');
+      const error = document.getElementById('photoError');
+      status.textContent = 'Uploading...';
+      error.style.display = 'none';
+      try {
+        const res = await fetch('/auth/skip-alternatives/photo', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (res.ok) {
+          status.innerHTML = '<span style="color:#3fb950">✓ Uploaded! Redirecting...</span>';
+          setTimeout(() => window.location.href = data.redirect || '/dashboard', 500);
+        } else {
+          error.textContent = data.error || 'Upload failed';
+          error.style.display = 'block';
+        }
+      } catch(e) {
+        error.textContent = 'Network error';
+        error.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

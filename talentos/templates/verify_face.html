@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TalentOS — Face Verification</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg1: #0d1117; --bg2: #161b22; --text: #c9d1d9; --text2: #8b949e; --text3: #484f58; --border: #30363d; --accent: #58a6ff; --orange: #f0883e; --green: #3fb950; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes drift { 0% { transform: translate(0,0); } 25% { transform: translate(40px,-30px); } 50% { transform: translate(-30px,40px); } 75% { transform: translate(20px,-20px); } 100% { transform: translate(0,0); } }
+    @keyframes scanLine { 0% { top: 0; } 100% { top: 100%; } }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .bg-orbs { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-orbs .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12; animation: drift 25s ease-in-out infinite; }
+    .bg-orbs .orb:nth-child(1) { width: 500px; height: 500px; background: var(--accent); top: -150px; left: -150px; }
+    .bg-orbs .orb:nth-child(2) { width: 350px; height: 350px; background: var(--orange); bottom: -100px; right: -100px; animation-delay: -8s; }
+    .bg-orbs .orb:nth-child(3) { width: 200px; height: 200px; background: var(--green); top: 50%; left: 60%; animation-delay: -15s; }
+    .card { background: rgba(22,27,34,0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(48,54,61,0.4); border-radius: 16px; padding: 40px; width: 440px; max-width: 92vw; animation: slideUp 0.6s ease-out; position: relative; overflow: hidden; z-index: 1; text-align: center; }
+    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--orange), var(--green)); background-size: 200% 100%; animation: shimmer 4s linear infinite; }
+    h1 { color: var(--accent); margin-bottom: 4px; font-size: 26px; animation: fadeIn 0.8s ease-out; }
+    h1::before { content: "◆ "; font-size: 18px; color: var(--orange); animation: pulse 2s infinite; }
+    .subtitle { color: var(--text2); font-size: 14px; margin-bottom: 24px; animation: fadeIn 1s ease-out; }
+    .cam-wrap { position: relative; border-radius: 12px; overflow: hidden; margin: 0 auto 16px; max-width: 320px; border: 2px solid var(--border); background: #000; }
+    .cam-wrap video { width: 100%; display: block; }
+    .cam-wrap .scan-line { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: scanLine 2s linear infinite; opacity: 0.6; }
+    .status { font-size: 13px; color: var(--text2); margin-bottom: 16px; min-height: 20px; animation: fadeIn 0.6s ease-out; }
+    .error { color: #f85149; font-size: 13px; margin-bottom: 12px; display: none; }
+    .btn-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    button { padding: 10px 24px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    button:hover { transform: translateY(-2px); }
+    .btn-primary { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; }
+    .btn-primary:hover { box-shadow: 0 4px 20px rgba(35,134,54,0.4); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { background: rgba(33,38,45,0.8); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: rgba(58,28,28,0.8); color: #f85149; border: 1px solid #6a2d2d; }
+    .link { text-align: center; margin-top: 16px; font-size: 13px; }
+    .link a { color: var(--accent); text-decoration: none; }
+    .link a:hover { color: var(--orange); text-decoration: underline; }
+    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: var(--text3); animation: fadeIn 2s ease-out; }
+    @media (max-width: 1024px) {
+      .card { width: 400px; padding: 32px; }
+    }
+    @media (max-width: 768px) {
+      body { align-items: flex-start; padding-top: 24px; padding-bottom: 24px; }
+    }
+    @media (max-width: 480px) {
+      .card { padding: 20px 14px; max-width: 96vw; }
+      h1 { font-size: 18px; }
+      .subtitle { font-size: 12px; }
+      .cam-wrap { max-width: 100%; }
+      button { padding: 12px 20px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+  <div class="card">
+    <h1>TalentOS</h1>
+    <p class="subtitle" id="purposeText">{{ "Face Enrollment" if purpose == "enroll" else "Face Verification" }}</p>
+    <div class="cam-wrap" id="camWrap" style="display:none">
+      <video id="video" width="320" height="240" autoplay muted playsinline></video>
+      <div class="scan-line"></div>
+    </div>
+    <canvas id="canvas" style="display:none"></canvas>
+    <div class="status" id="status">Preparing camera...</div>
+    <div class="error" id="error"></div>
+    <div class="btn-row">
+      <button id="captureBtn" class="btn-primary" disabled>Capture Face</button>
+      <button id="skipBtn" class="btn-secondary">Skip</button>
+    </div>
+    <div class="link"><a href="/auth/login">← Back to Login</a></div>
+    <div class="footer">TalentOS v2.0</div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
+  <script>
+    const purpose = "{{ purpose }}";
+    let stream = null;
+    let modelsLoaded = false;
+    let captured = false;
+
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+    const camWrap = document.getElementById('camWrap');
+    const captureBtn = document.getElementById('captureBtn');
+    const skipBtn = document.getElementById('skipBtn');
+
+    async function startCam() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+        video.srcObject = stream;
+        await video.play();
+        camWrap.style.display = 'block';
+        statusEl.textContent = 'Loading face model...';
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        modelsLoaded = true;
+        captureBtn.disabled = false;
+        statusEl.textContent = 'Look at the camera and click Capture';
+      } catch(e) {
+        camWrap.style.display = 'none';
+        statusEl.innerHTML = '<span style="color:var(--orange)">Camera or model unavailable. You can skip this step.</span>';
+      }
+    }
+
+    function stopCam() {
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    }
+
+    captureBtn.addEventListener('click', async function() {
+      if (!modelsLoaded || captured) return;
+      this.disabled = true;
+      statusEl.textContent = 'Detecting face...';
+      try {
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 }))
+          .withFaceLandmarks().withFaceDescriptor();
+        if (!detection) {
+          statusEl.innerHTML = '<span style="color:#f85149">No face detected. Try again.</span>';
+          this.disabled = false;
+          return;
+        }
+        const descriptor = Array.from(detection.descriptor);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        statusEl.textContent = 'Verifying...';
+        const res = await fetch('/auth/face/capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ descriptor, image: imageData })
+        });
+        const data = await res.json();
+        if (res.ok && data.match) {
+          statusEl.innerHTML = '<span style="color:#3fb950">✓ Success! Redirecting...</span>';
+          captured = true;
+          stopCam();
+          setTimeout(() => window.location.href = '/dashboard', 600);
+        } else if (data.redirect) {
+          stopCam();
+          window.location.href = data.redirect;
+        } else {
+          statusEl.innerHTML = '<span style="color:#f85149">' + (data.error || 'Face not recognized') + '</span>';
+          if (data.remaining !== undefined) {
+            statusEl.innerHTML += ' <span style="color:var(--orange)">(' + data.remaining + ' tries left)</span>';
+          }
+          this.disabled = false;
+        }
+      } catch(e) {
+        statusEl.innerHTML = '<span style="color:#f85149">Error: ' + e.message + '</span>';
+        this.disabled = false;
+      }
+    });
+
+    skipBtn.addEventListener('click', function() {
+      stopCam();
+      window.location.href = '/auth/skip-alternatives';
+    });
+
+    startCam();
+  </script>
+</body>
+</html>

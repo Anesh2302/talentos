@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
-from ..models import Company, JobPosting, User, db
+from ..models import Company, JobPosting, User, CompanyReview, db
 
 bp = Blueprint("company", __name__, url_prefix="/companies")
 
@@ -51,11 +51,13 @@ def create():
 @bp.route("/<int:id>")
 def view(id):
     comp = Company.query.get_or_404(id)
-    jobs = comp.jobs.order_by(JobPosting.created_at.desc()).all() if hasattr(comp, "jobs") else []
+    jobs = JobPosting.query.filter_by(company_id=id).order_by(JobPosting.created_at.desc()).all()
+    reviews = CompanyReview.query.filter_by(company_id=id).order_by(CompanyReview.created_at.desc()).all()
     return render_template(
         "company/view.html",
         company=comp,
         jobs=jobs,
+        reviews=reviews,
         active="companies",
         title=comp.name,
         heading=comp.name,
@@ -101,3 +103,21 @@ def delete(id):
     db.session.commit()
     flash("Company deleted successfully.", "success")
     return redirect(url_for("company.index"))
+
+
+@bp.route("/<int:id>/review", methods=["POST"])
+@login_required
+def add_review(id):
+    comp = Company.query.get_or_404(id)
+    existing = CompanyReview.query.filter_by(user_id=current_user.id, company_id=id).first()
+    if existing:
+        flash("You already reviewed this company", "info")
+        return redirect(url_for("company.view", id=id))
+    rating = request.form.get("rating", 5, type=int)
+    title = request.form.get("title", "")
+    content = request.form.get("content", "")
+    review = CompanyReview(user_id=current_user.id, company_id=id, rating=rating, title=title, content=content)
+    db.session.add(review)
+    db.session.commit()
+    flash("Review submitted", "success")
+    return redirect(url_for("company.view", id=id))

@@ -13,6 +13,36 @@
   {% endif %}
 </div>
 
+{% set avg_rating = reviews|map(attribute='rating')|sum / reviews|length if reviews else 0 %}
+<div class="card" style="margin-top:16px">
+  <h3>Rating: {{ '%.1f'|format(avg_rating) }} ⭐ ({{ reviews|length }} reviews)</h3>
+  {% if reviews %}
+    {% for r in reviews[:5] %}
+    <div style="padding:12px 0;border-bottom:1px solid #30363d">
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-weight:600;color:#f0f6fc">{{ r.title }}</span>
+        <span style="color:#f0883e">{{ '⭐' * r.rating }}</span>
+      </div>
+      <div style="font-size:12px;color:#8b949e;margin-top:4px">{{ r.content[:200] }}</div>
+      <div style="font-size:11px;color:#484f58;margin-top:4px">{{ r.user.name }} · {{ r.created_at.strftime('%b %d, %Y') }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p style="color:#484f58;font-size:13px">No reviews yet</p>
+  {% endif %}
+  <form method="POST" action="/companies/{{ company.id }}/review" style="margin-top:16px;padding-top:16px;border-top:1px solid #30363d">
+    <h4 style="color:#8b949e;font-size:13px;margin-bottom:8px">Write a Review</h4>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <select name="rating" style="width:auto;padding:6px 10px;margin-bottom:0">
+        {% for i in range(1,6) %}<option value="{{ i }}">{{ '⭐' * i }}</option>{% endfor %}
+      </select>
+      <input type="text" name="title" placeholder="Review title" style="margin-bottom:0">
+    </div>
+    <textarea name="content" placeholder="Share your experience working at this company..." style="margin-bottom:8px;min-height:60px"></textarea>
+    <button type="submit" class="btn btn-primary" style="padding:8px 16px;font-size:12px">Submit Review</button>
+  </form>
+</div>
+
 <h2 style="color:#f0883e;margin:20px 0 12px;font-size:18px">Open Positions ({{ company.jobs|selectattr('status','equalto','open')|list|length }})</h2>
 {% set open_jobs = company.jobs|selectattr('status','equalto','open')|list %}
 {% if open_jobs %}

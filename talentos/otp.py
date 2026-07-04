@@ -73,8 +73,8 @@ def send_otp_email(recipient, otp_code):
                 current_app.config["MAIL_PASSWORD"],
             )
             server.sendmail(msg["From"], [recipient], msg.as_string())
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[SMTP] OTP email to {recipient} failed: {e}")
 
 
 def send_reset_email(recipient, token):

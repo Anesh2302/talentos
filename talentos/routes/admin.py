@@ -1,9 +1,14 @@
 from functools import wraps
-from datetime import datetime
-from flask import Blueprint, jsonify, request, render_template, redirect, url_for
+from datetime import datetime, date
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
-from ..models import User, Candidate, Job, Todo, LoginHistory
-from .. import db
+from sqlalchemy.exc import IntegrityError
+from ..models import (
+    User, Candidate, Job, Todo, LoginHistory, AuditLog, JobPosting, Application, db,
+    Post, PostLike, Comment, Follow, SavedJob, Notification, CompanyReview,
+    ActivityLog, FaceVerification, PasswordResetToken, BackupCode,
+    ConversationParticipant, Message, UserSkill, Interview, Company
+)
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -16,6 +21,12 @@ def admin_required(f):
             return jsonify({"error": "Admin access required"}), 403
         return f(*args, **kwargs)
     return decorated
+
+
+@bp.route("")
+@admin_required
+def admin_home():
+    return redirect(url_for("admin.dashboard"))
 
 
 @bp.route("/dashboard")
@@ -275,9 +286,38 @@ def delete_user(user_id):
     if user.id == current_user.id:
         flash("Cannot delete yourself.", "error")
         return redirect(url_for("admin.users_page"))
-    db.session.delete(user)
-    db.session.commit()
-    flash(f"User {user.name} deleted.", "success")
+    uid = user.id
+    try:
+        BackupCode.query.filter_by(user_id=uid).delete()
+        PasswordResetToken.query.filter_by(user_id=uid).delete()
+        LoginHistory.query.filter_by(user_id=uid).delete()
+        ConversationParticipant.query.filter_by(user_id=uid).delete()
+        Message.query.filter_by(sender_id=uid).delete()
+        PostLike.query.filter_by(user_id=uid).delete()
+        Comment.query.filter_by(user_id=uid).delete()
+        Follow.query.filter_by(follower_id=uid).delete()
+        Follow.query.filter_by(followed_id=uid).delete()
+        SavedJob.query.filter_by(user_id=uid).delete()
+        Notification.query.filter_by(user_id=uid).delete()
+        CompanyReview.query.filter_by(user_id=uid).delete()
+        ActivityLog.query.filter_by(user_id=uid).delete()
+        AuditLog.query.filter_by(user_id=uid).delete()
+        FaceVerification.query.filter_by(user_id=uid).delete()
+        UserSkill.query.filter_by(user_id=uid).delete()
+        Interview.query.filter_by(created_by=uid).delete()
+        Candidate.query.filter_by(user_id=uid).delete()
+        Application.query.filter_by(user_id=uid).delete()
+        Post.query.filter_by(user_id=uid).delete()
+        JobPosting.query.filter_by(created_by=uid).delete()
+        Todo.query.filter_by(created_by=uid).delete()
+        Company.query.filter_by(created_by=uid).delete()
+        Job.query.filter_by(created_by=uid).update({"created_by": None})
+        db.session.delete(user)
+        db.session.commit()
+        flash(f"User {user.name} deleted.", "success")
+    except IntegrityError:
+        db.session.rollback()
+        flash(f"Cannot delete {user.name}: user has related records that cannot be removed.", "error")
     return redirect(url_for("admin.users_page"))
 
 
@@ -293,3 +333,52 @@ def all_login_history():
         "success": e.success,
         "timestamp": e.timestamp.isoformat(),
     } for e in entries])
+
+
+@bp.route("/charts")
+@admin_required
+def charts():
+    from sqlalchemy import func
+    app_over_time = db.session.query(
+        func.date(Application.created_at).label('date'),
+        func.count(Application.id).label('count')
+    ).group_by(func.date(Application.created_at)).order_by('date').all()
+    status_counts = db.session.query(
+        Application.status, func.count(Application.id)
+    ).group_by(Application.status).all()
+    jobs_over_time = db.session.query(
+        func.date(JobPosting.created_at).label('date'),
+        func.count(JobPosting.id).label('count')
+    ).group_by(func.date(JobPosting.created_at)).order_by('date').all()
+    return render_template("admin/charts.html",
+        app_over_time=[{"date": str(r.date), "count": r.count} for r in app_over_time],
+        status_counts=[{"status": s, "count": c} for s, c in status_counts],
+        jobs_over_time=[{"date": str(r.date), "count": r.count} for r in jobs_over_time],
+        active="admin_charts",
+    )
+
+
+@bp.route("/audit")
+@admin_required
+def audit_log():
+    entries = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(100).all()
+    return render_template("admin/audit.html", entries=entries, active="admin_audit")
+
+
+@bp.route("/bulk/status", methods=["POST"])
+@admin_required
+def bulk_status():
+    ids = request.form.get("ids", "")
+    status = request.form.get("status", "")
+    if status not in ("applied", "screening", "interview", "offer", "rejected", "hired"):
+        flash("Invalid status", "error")
+        return redirect(url_for("applications.list_applications"))
+    id_list = [int(x) for x in ids.split(",") if x.strip().isdigit()]
+    for aid in id_list:
+        app = Application.query.get(aid)
+        if app:
+            app.status = status
+            app.updated_at = datetime.utcnow()
+    db.session.commit()
+    flash(f"Updated {len(id_list)} applications to {status}", "success")
+    return redirect(url_for("applications.list_applications"))

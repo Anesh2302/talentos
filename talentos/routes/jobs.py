@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
-from ..models import JobPosting, Company, Application, User, db
+from ..models import JobPosting, Company, Application, SavedJob, User, db
 from datetime import datetime
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
@@ -183,3 +183,24 @@ def apply_job(id):
     db.session.commit()
     flash("Application submitted successfully.", "success")
     return redirect(url_for("jobs.job_detail", id=job.id))
+
+
+@bp.route("/saved")
+@login_required
+def saved_jobs():
+    saved = SavedJob.query.filter_by(user_id=current_user.id).order_by(SavedJob.created_at.desc()).all()
+    return render_template("jobs/saved.html", saved=saved, active="saved")
+
+
+@bp.route("/<int:id>/save", methods=["POST"])
+@login_required
+def toggle_save(id):
+    job = JobPosting.query.get_or_404(id)
+    existing = SavedJob.query.filter_by(user_id=current_user.id, job_id=id).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        return jsonify({"saved": False, "message": "Job unsaved"})
+    SavedJob(user_id=current_user.id, job_id=id)
+    db.session.commit()
+    return jsonify({"saved": True, "message": "Job saved"})

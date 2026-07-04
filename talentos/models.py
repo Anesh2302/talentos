@@ -30,6 +30,7 @@ class User(UserMixin, db.Model):
     location = db.Column(db.String(100), default="")
     phone = db.Column(db.String(20), default="")
     profile_pic = db.Column(db.String(500), default="")
+    profile_pic_data = db.Column(db.Text, default="")
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     otp_secret = db.Column(db.String(32), default="")
     otp_enabled = db.Column(db.Boolean, default=False)
@@ -40,7 +41,16 @@ class User(UserMixin, db.Model):
     login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
     session_token = db.Column(db.String(64), default="")
+    login_token = db.Column(db.String(128), default="")
+    linkedin = db.Column(db.String(500), default="")
+    github = db.Column(db.String(500), default="")
+    website = db.Column(db.String(500), default="")
+    default_resume_data = db.Column(db.Text, default="")
+    default_resume_filename = db.Column(db.String(200), default="")
+    default_resume_mime = db.Column(db.String(100), default="")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    face_verified = db.Column(db.Boolean, default=False)
+    face_fail_count = db.Column(db.Integer, default=0)
 
     company = db.relationship("Company", foreign_keys=[company_id], lazy=True)
     skills = db.relationship("UserSkill", lazy=True)
@@ -287,3 +297,80 @@ class Follow(db.Model):
 
     follower = db.relationship("User", foreign_keys=[follower_id], lazy=True)
     followed = db.relationship("User", foreign_keys=[followed_id], lazy=True)
+
+
+class SavedJob(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey("job_posting.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True)
+    job = db.relationship("JobPosting", lazy=True)
+
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    type = db.Column(db.String(50), default="info")
+    message = db.Column(db.String(500), nullable=False)
+    link = db.Column(db.String(500), default="")
+    read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True)
+
+
+class CompanyReview(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=False)
+    rating = db.Column(db.Integer, default=5)
+    title = db.Column(db.String(200), default="")
+    content = db.Column(db.Text, default="")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True)
+    company_rel = db.relationship("Company", lazy=True)
+
+
+class ActivityLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    type = db.Column(db.String(50), default="action")
+    description = db.Column(db.String(500), nullable=False)
+    link = db.Column(db.String(500), default="")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True)
+
+
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    action = db.Column(db.String(100), nullable=False)
+    target_type = db.Column(db.String(50), default="")
+    target_id = db.Column(db.Integer, nullable=True)
+    details = db.Column(db.Text, default="")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True)
+
+
+class Interview(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    application_id = db.Column(db.Integer, db.ForeignKey("application.id"), nullable=False)
+    scheduled_at = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(30), default="scheduled")
+    notes = db.Column(db.Text, default="")
+    location = db.Column(db.String(200), default="")
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    application = db.relationship("Application", lazy=True)
+    creator = db.relationship("User", foreign_keys=[created_by], lazy=True)
+
+
+class FaceVerification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    face_encoding = db.Column(db.Text, default="")
+    image_data = db.Column(db.Text, default="")
+    liveness_score = db.Column(db.Float, default=0.0)
+    verified = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User", foreign_keys=[user_id], lazy=True)

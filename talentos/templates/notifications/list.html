@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Notifications{% endblock %}
+{% block heading %}Notifications{% endblock %}
+{% block content %}
+{% if notifications %}
+  {% for n in notifications %}
+  <div class="card" style="{% if not n.read %}border-left:3px solid #58a6ff{% endif %}">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-size:13px;color:{% if not n.read %}#f0f6fc{% else %}#8b949e{% endif %}">{{ n.message }}</span>
+        <div style="font-size:11px;color:#484f58;margin-top:4px">{{ n.created_at.strftime('%b %d at %I:%M %p') }}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        {% if n.link %}<a href="{{ n.link }}" class="btn btn-secondary" style="padding:4px 12px;font-size:11px">View</a>{% endif %}
+        {% if not n.read %}<button class="btn btn-secondary" style="padding:4px 12px;font-size:11px" onclick="markRead({{ n.id }})">Mark Read</button>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty">
+  <p style="font-size:24px;margin-bottom:8px">🔔</p>
+  <p>No notifications yet</p>
+</div>
+{% endif %}
+<script>
+async function markRead(id) {
+  await fetch('/notifications/read/' + id, { method:'POST' });
+  location.reload();
+}
+</script>
+{% endblock %}

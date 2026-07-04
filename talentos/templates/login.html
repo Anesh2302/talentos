@@ -6,37 +6,65 @@
   <title>TalentOS — Login</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg1: #0d1117; --bg2: #161b22; --text: #c9d1d9; --text2: #8b949e; --text3: #484f58; --border: #30363d; --accent: #58a6ff; --orange: #f0883e; --green: #3fb950; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-    @keyframes glow { 0%, 100% { box-shadow: 0 0 8px rgba(88,166,255,0.3); } 50% { box-shadow: 0 0 30px rgba(88,166,255,0.7); } }
-    @keyframes codeReveal { from { opacity: 0; transform: scale(0.5) rotateZ(-10deg); } to { opacity: 1; transform: scale(1) rotateZ(0); } }
+    @keyframes drift { 0% { transform: translate(0,0); } 25% { transform: translate(40px,-30px); } 50% { transform: translate(-30px,40px); } 75% { transform: translate(20px,-20px); } 100% { transform: translate(0,0); } }
     @keyframes cameraPulse { 0%, 100% { border-color: #30363d; } 50% { border-color: #58a6ff; } }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: #c9d1d9; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .card { background: linear-gradient(135deg, #161b22 0%, #1c2128 100%); border: 1px solid #30363d; border-radius: 16px; padding: 48px 40px; width: 400px; animation: slideUp 0.6s ease-out; position: relative; overflow: hidden; }
-    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #58a6ff, #f0883e, #3fb950); background-size: 200% 100%; animation: shimmer 4s linear infinite; }
-    h1 { color: #58a6ff; text-align: center; margin-bottom: 4px; font-size: 28px; animation: fadeIn 0.8s ease-out; }
-    h1::before { content: "◆ "; font-size: 18px; color: #f0883e; animation: pulse 2s infinite; }
-    .subtitle { text-align: center; color: #8b949e; font-size: 14px; margin-bottom: 32px; animation: fadeIn 1s ease-out; }
-    label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; font-weight: 600; animation: fadeIn 1.2s ease-out; }
-    input { width: 100%; padding: 12px 14px; background: #0d1117; border: 2px solid #30363d; border-radius: 10px; color: #c9d1d9; font-size: 14px; margin-bottom: 20px; outline: none; transition: all 0.3s ease; }
-    input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15), 0 0 20px rgba(88,166,255,0.1); transform: translateY(-1px); }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .bg-orbs { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-orbs .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12; animation: drift 25s ease-in-out infinite; }
+    .bg-orbs .orb:nth-child(1) { width: 500px; height: 500px; background: var(--accent); top: -150px; left: -150px; }
+    .bg-orbs .orb:nth-child(2) { width: 350px; height: 350px; background: var(--orange); bottom: -100px; right: -100px; animation-delay: -8s; }
+    .bg-orbs .orb:nth-child(3) { width: 200px; height: 200px; background: var(--green); top: 50%; left: 60%; animation-delay: -15s; }
+    .card { background: rgba(22,27,34,0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(48,54,61,0.4); border-radius: 16px; padding: 48px 40px; width: 400px; max-width: 92vw; animation: slideUp 0.6s ease-out; position: relative; overflow: hidden; z-index: 1; }
+    .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--orange), var(--green)); background-size: 200% 100%; animation: shimmer 4s linear infinite; }
+    h1 { color: var(--accent); text-align: center; margin-bottom: 4px; font-size: 28px; animation: fadeIn 0.8s ease-out; }
+    h1::before { content: "◆ "; font-size: 18px; color: var(--orange); animation: pulse 2s infinite; }
+    .subtitle { text-align: center; color: var(--text2); font-size: 14px; margin-bottom: 32px; animation: fadeIn 1s ease-out; }
+    label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; font-weight: 600; animation: fadeIn 1.2s ease-out; }
+    input { width: 100%; padding: 12px 14px; background: rgba(13,17,23,0.6); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; margin-bottom: 20px; outline: none; transition: all 0.3s ease; }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88,166,255,0.15), 0 0 20px rgba(88,166,255,0.1); transform: translateY(-1px); background: rgba(22,27,34,0.8); }
     button { width: 100%; padding: 12px; background: linear-gradient(135deg, #238636, #2ea043); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; animation: fadeIn 1.4s ease-out; }
     button:hover { transform: translateY(-3px); box-shadow: 0 6px 25px rgba(35,134,54,0.4); }
     button:active { transform: translateY(0); }
-    .error { background: linear-gradient(135deg, #3a1c1c, #4a1c1c); color: #f85149; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: none; border: 1px solid #6a2d2d; animation: fadeIn 0.3s ease-out; }
-    .loading { display: none; text-align: center; color: #8b949e; font-size: 13px; margin-top: 12px; }
-    .loading::before { content: ""; display: inline-block; width: 18px; height: 18px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+    .error { background: rgba(58,28,28,0.8); backdrop-filter: blur(6px); color: var(--red, #f85149); padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: none; border: 1px solid #6a2d2d; animation: fadeIn 0.3s ease-out; }
+    .loading { display: none; text-align: center; color: var(--text2); font-size: 13px; margin-top: 12px; }
+    .loading::before { content: ""; display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
     .link { text-align: center; margin-top: 20px; font-size: 13px; }
-    .link a { color: #58a6ff; text-decoration: none; transition: color 0.2s; }
-    .link a:hover { color: #f0883e; text-decoration: underline; }
-    .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #484f58; animation: fadeIn 2s ease-out; }
+    .link a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+    .link a:hover { color: var(--orange); text-decoration: underline; }
+    .footer { text-align: center; margin-top: 24px; font-size: 12px; color: var(--text3); animation: fadeIn 2s ease-out; }
+
+    @media (max-width: 1024px) {
+      body { padding: 40px 20px; }
+      .card { width: 380px; padding: 36px 28px; }
+    }
+    @media (max-width: 768px) {
+      body { align-items: flex-start; padding-top: 32px; }
+    }
+    @media (max-width: 480px) {
+      .card { padding: 24px 16px; max-width: 96vw; }
+      h1 { font-size: 20px; }
+      input { padding: 10px 12px; font-size: 14px; margin-bottom: 14px; }
+      .subtitle { font-size: 12px; margin-bottom: 20px; }
+      button { padding: 14px 12px; font-size: 15px; }
+      #togglePw { top: 12px !important; right: 10px !important; }
+      .link { margin-top: 14px; font-size: 12px; }
+      .footer { margin-top: 16px; font-size: 11px; }
+    }
   </style>
 </head>
 <body>
+  <div class="bg-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
 <div class="card">
   <h1>TalentOS</h1>
   <p class="subtitle">Sign in to your account</p>
@@ -47,27 +75,74 @@
     <label for="password">Password</label>
     <div style="position:relative">
       <input type="password" id="password" placeholder="Password" required style="padding-right:44px">
-      <span id="togglePw" style="position:absolute;right:12px;top:10px;cursor:pointer;font-size:16px;color:#8b949e;user-select:none;font-weight:bold" onclick="togglePassword()">SHOW</span>
+      <span id="togglePw" style="position:absolute;right:12px;top:10px;cursor:pointer;font-size:16px;color:var(--text2);user-select:none;font-weight:bold" onclick="togglePassword()">SHOW</span>
     </div>
     <button type="submit">Sign In</button>
     <div class="loading" id="loading">Signing in...</div>
   </form>
-  <div class="link" style="margin-bottom:8px">Don't have an account? <a href="/auth/signup">Create one</a></div>
-  <div class="link"><a href="/auth/face-login" id="faceLoginLink" style="color:#f0883e">Sign in with Face ID</a></div>
+  <button id="magicLinkBtn" style="margin-top:10px;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.2s;width:100%" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'" onclick="sendMagicLink()">Send Magic Link</button>
+  <div id="magicStatus" style="text-align:center;font-size:12px;margin-top:8px;color:var(--text2);display:none"></div>
+  <div class="link" style="margin-bottom:8px;margin-top:12px">Don't have an account? <a href="/auth/signup">Create one</a></div>
+  <div class="link"><a href="#" onclick="faceLogin();return false" style="color:var(--orange)">Sign in with Face ID</a></div>
+  <div class="link" style="margin-top:8px"><a href="/" style="color:var(--text3)">← Back to Home</a></div>
   <div class="footer">TalentOS v2.0</div>
 </div>
 
 <script>
+async function sendMagicLink() {
+  const email = document.getElementById('email').value;
+  if (!email) { document.getElementById('magicStatus').textContent = 'Enter your email first'; document.getElementById('magicStatus').style.display = 'block'; return; }
+  const btn = document.getElementById('magicLinkBtn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  const status = document.getElementById('magicStatus');
+  try {
+    const res = await fetch('/auth/magic-link', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
+    const data = await res.json();
+    status.textContent = data.message || 'Magic link sent!';
+    status.style.color = '#3fb950';
+    status.style.display = 'block';
+  } catch(e) {
+    status.textContent = 'Error sending magic link';
+    status.style.color = '#f85149'; status.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Send Magic Link';
+}
 function togglePassword() {
   const pw = document.getElementById('password');
   const btn = document.getElementById('togglePw');
   pw.type = pw.type === 'password' ? 'text' : 'password';
   btn.textContent = pw.type === 'password' ? 'SHOW' : 'HIDE';
 }
+async function faceLogin() {
+  let email = document.getElementById('email').value.trim();
+  if (!email) {
+    email = prompt('Enter your email for face login:');
+    if (!email) return;
+  }
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = 'Checking...';
+  btn.style.pointerEvents = 'none';
+  try {
+    const res = await fetch('/auth/face-login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
+    const data = await res.json();
+    if (res.ok && data.face_redirect) {
+      window.location.href = data.face_redirect;
+    } else {
+      alert(data.error || 'Face login unavailable. Use email/password.');
+      btn.textContent = orig;
+      btn.style.pointerEvents = 'auto';
+    }
+  } catch(e) {
+    alert('Network error');
+    btn.textContent = orig;
+    btn.style.pointerEvents = 'auto';
+  }
+}
 
 let loginEmail = '';
 let loginPassword = '';
-let faceToken = '';
+let loginOtp = '';
 
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -89,10 +164,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     if (data.otp_required) {
       loadingEl.style.display = 'none';
       showOtpDialog(email, password);
-    } else if (data.face_required) {
+    } else if (data.face_redirect) {
       loadingEl.style.display = 'none';
-      faceToken = data.face_token;
-      showFaceStep(email, data.face_token);
+      window.location.href = data.face_redirect;
     } else if (res.ok) {
       const params = new URLSearchParams(window.location.search);
       window.location.href = params.get('next') || '/dashboard';
@@ -112,14 +186,14 @@ function showOtpDialog(email, password) {
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease-out';
     overlay.innerHTML = `
-    <div class="card" style="width:380px;text-align:center;animation:slideUp 0.4s ease-out">
-      <h3 style="margin-bottom:8px;color:#58a6ff;font-size:18px">OTP Required</h3>
-      <p style="color:#8b949e;font-size:13px;margin-bottom:16px">A verification code was sent to your email</p>
+    <div class="card" style="width:380px;text-align:center">
+      <h3 style="margin-bottom:8px;color:var(--accent);font-size:18px">OTP Required</h3>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">A verification code was sent to your email</p>
       <input type="text" id="otpInput" placeholder="Enter 6-digit code" style="text-align:center;font-size:22px;letter-spacing:6px;font-weight:bold;font-family:monospace">
       <div id="otpError" style="color:#f85149;font-size:12px;margin-bottom:12px;display:none"></div>
       <div style="display:flex;gap:8px;justify-content:center">
         <button id="otpSubmitBtn" class="btn" style="padding:10px 24px;background:linear-gradient(135deg,#238636,#2ea043);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Verify OTP</button>
-        <button id="otpCancelBtn" class="btn" style="padding:10px 24px;background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:8px;cursor:pointer;transition:all 0.2s">Cancel</button>
+        <button id="otpCancelBtn" class="btn" style="padding:10px 24px;background:rgba(33,38,45,0.8);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.2s">Cancel</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -127,11 +201,12 @@ function showOtpDialog(email, password) {
   document.getElementById('otpSubmitBtn').onclick = async function() {
     const otp = document.getElementById('otpInput').value.trim();
     if (!otp) return;
+    loginOtp = otp;
     this.disabled = true; this.textContent = 'Verifying...';
     try {
       const res = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password,otp}) });
       const data = await res.json();
-      if (data.face_required) { faceToken = data.face_token; overlay.remove(); showFaceStep(email, data.face_token); }
+      if (data.face_redirect) { overlay.remove(); window.location.href = data.face_redirect; }
       else if (res.ok) { window.location.href = '/dashboard'; }
       else { document.getElementById('otpError').textContent = data.error || 'Invalid OTP'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
     } catch(err) { document.getElementById('otpError').textContent = 'Network error'; document.getElementById('otpError').style.display = 'block'; this.disabled = false; this.textContent = 'Verify OTP'; }
@@ -140,76 +215,6 @@ function showOtpDialog(email, password) {
 }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
-<script>
-function showFaceStep(email, token) {
-  const overlay = document.createElement('div');
-  overlay.id = 'faceStep';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease-out';
-  overlay.innerHTML = `
-    <div class="card" style="width:420px;text-align:center;animation:slideUp 0.4s ease-out">
-      <h3 style="margin-bottom:4px;color:#58a6ff;font-size:18px">Face Verification</h3>
-      <p style="color:#8b949e;font-size:13px;margin-bottom:16px">Look at the camera to complete login</p>
-      <video id="faceStepVideo" width="320" height="240" autoplay muted playsinline style="border-radius:8px;background:#000;width:100%;max-width:320px;margin:0 auto 12px;border:2px solid #30363d;animation:cameraPulse 2s infinite"></video>
-      <div id="faceStepStatus" style="font-size:13px;color:#8b949e;margin-bottom:12px;animation:fadeIn 0.6s ease-out">Starting camera...</div>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-        <button id="faceStepVerifyBtn" class="btn" style="padding:10px 24px;background:linear-gradient(135deg,#238636,#2ea043);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.3s" disabled>Verify Face</button>
-        <button id="faceStepSkipBtn" class="btn" style="padding:10px 24px;background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:8px;cursor:pointer;transition:all 0.2s">Skip (use password)</button>
-        <button id="faceStepCancelBtn" class="btn" style="padding:10px 24px;background:#3a1c1c;color:#f85149;border:1px solid #6a2d2d;border-radius:8px;cursor:pointer;transition:all 0.2s">Cancel</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  let stream = null;
-  let modelsLoaded = false;
-  async function startCam() {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { width:320, height:240, facingMode:'user' } });
-      const video = document.getElementById('faceStepVideo');
-      video.srcObject = stream;
-      await video.play();
-      document.getElementById('faceStepStatus').textContent = 'Loading face model...';
-      try {
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        modelsLoaded = true;
-        document.getElementById('faceStepVerifyBtn').disabled = false;
-        document.getElementById('faceStepStatus').textContent = 'Look at the camera and click Verify';
-      } catch(e) {
-        document.getElementById('faceStepStatus').innerHTML = '<span style="color:#f0883e;animation:fadeIn 0.5s">Model load failed. You can skip face step.</span>';
-      }
-    } catch(e) {
-      document.getElementById('faceStepStatus').innerHTML = '<span style="color:#f85149;animation:fadeIn 0.5s">Camera error: ' + e.message + '</span>';
-    }
-  }
-  startCam();
-  document.getElementById('faceStepVerifyBtn').onclick = async function() {
-    if (!modelsLoaded) return;
-    const video = document.getElementById('faceStepVideo');
-    const status = document.getElementById('faceStepStatus');
-    this.disabled = true; status.textContent = 'Verifying...';
-    try {
-      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize:320 })).withFaceLandmarks().withFaceDescriptor();
-      if (!detection) { status.innerHTML = '<span style="color:#f85149">No face detected. Try again.</span>'; this.disabled = false; return; }
-      const res = await fetch('/auth/face/complete-login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, face_token:token, descriptor:Array.from(detection.descriptor)}) });
-      const data = await res.json();
-      if (res.ok) { status.innerHTML = '<span style="color:#3fb950">✓ Login successful! Redirecting...</span>'; if(stream) stream.getTracks().forEach(t=>t.stop()); setTimeout(()=>window.location.href='/dashboard', 500); }
-      else { status.innerHTML = '<span style="color:#f85149">' + (data.error||'Face not recognized') + '</span>'; this.disabled = false; }
-    } catch(e) { status.innerHTML = '<span style="color:#f85149">Error: ' + e.message + '</span>'; this.disabled = false; }
-  };
-  document.getElementById('faceStepSkipBtn').onclick = async function() {
-    const status = document.getElementById('faceStepStatus');
-    status.textContent = 'Logging in with password...';
-    try {
-      const res = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:loginEmail, password:loginPassword, skip_face:true}) });
-      const data = await res.json();
-      if (res.ok) { if(stream) stream.getTracks().forEach(t=>t.stop()); window.location.href = '/dashboard'; }
-      else { status.innerHTML = '<span style="color:#f85149">' + (data.error||'Login failed') + '</span>'; }
-    } catch(e) { status.innerHTML = '<span style="color:#f85149">Error: ' + e.message + '</span>'; }
-  };
-  document.getElementById('faceStepCancelBtn').onclick = () => { if(stream) stream.getTracks().forEach(t=>t.stop()); overlay.style.opacity = '0'; overlay.style.transition = 'opacity 0.2s'; setTimeout(()=>overlay.remove(), 200); };
-}
-</script>
+
 </body>
 </html>

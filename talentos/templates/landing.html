@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TalentOS — Recruitment Platform</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg1: #0d1117; --bg2: #161b22; --bg3: #1c2128; --text: #c9d1d9; --text2: #8b949e; --text3: #484f58; --border: #30363d; --accent: #58a6ff; --orange: #f0883e; --green: #3fb950; --card-bg: rgba(22,27,34,0.6); --card-border: rgba(48,54,61,0.5); }
+    .light { --bg1: #f6f8fa; --bg2: #ffffff; --bg3: #f0f2f5; --text: #1f2328; --text2: #656d76; --text3: #8b949e; --border: #d0d7de; --accent: #0969da; --orange: #d29922; --green: #1a7f37; --card-bg: rgba(255,255,255,0.7); --card-border: rgba(208,215,222,0.5); }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg1); color: var(--text); overflow-x: hidden; position: relative; min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @keyframes drift { 0% { transform: translate(0,0); } 25% { transform: translate(30px,-20px); } 50% { transform: translate(-20px,30px); } 75% { transform: translate(20px,-30px); } 100% { transform: translate(0,0); } }
+    @keyframes glowPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+    @keyframes scanLine { 0% { top: 0; } 100% { top: 100%; } }
+    .bg-orbs { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bg-orbs .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; animation: drift 20s ease-in-out infinite; transition: background 0.3s; }
+    .bg-orbs .orb:nth-child(1) { width: 400px; height: 400px; background: var(--accent); top: -100px; left: -100px; animation-delay: 0s; }
+    .bg-orbs .orb:nth-child(2) { width: 300px; height: 300px; background: var(--orange); bottom: -50px; right: -50px; animation-delay: -7s; }
+    .bg-orbs .orb:nth-child(3) { width: 250px; height: 250px; background: var(--green); top: 50%; left: 50%; animation-delay: -14s; }
+    .bg-orbs .orb:nth-child(4) { width: 200px; height: 200px; background: #8b5cf6; top: 20%; right: 10%; animation-delay: -5s; }
+    .nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 40px; border-bottom: 1px solid var(--border); background: rgba(13,17,23,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; animation: fadeIn 0.6s ease-out; transition: background 0.3s; }
+    .light .nav { background: rgba(255,255,255,0.7); }
+    .nav .logo { color: var(--accent); font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .nav .logo span { color: var(--orange); animation: pulse 2s infinite; }
+    .nav .links { display: flex; gap: 12px; align-items: center; }
+    .nav .links a { text-decoration: none; font-size: 14px; font-weight: 600; padding: 8px 20px; border-radius: 8px; transition: all 0.25s; }
+    .nav .links .login { color: var(--text2); border: 1px solid var(--border); background: rgba(255,255,255,0.03); }
+    .nav .links .login:hover { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.08); }
+    .nav .links .signup { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; border: 1px solid transparent; }
+    .nav .links .signup:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(35,134,54,0.4); }
+    .theme-toggle { background: none; border: 1px solid var(--border); color: var(--text2); font-size: 16px; cursor: pointer; padding: 6px 10px; border-radius: 6px; transition: all 0.25s; line-height: 1; }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .hero { display: flex; align-items: center; justify-content: space-between; max-width: 1200px; margin: 0 auto; padding: 80px 40px 60px; gap: 60px; animation: slideUp 0.8s ease-out; position: relative; z-index: 1; }
+    .hero-text { flex: 1; }
+    .hero-text h1 { font-size: 48px; font-weight: 800; line-height: 1.15; background: linear-gradient(135deg, var(--accent), #79c0ff, var(--orange)); background-size: 200% 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradientShift 4s ease infinite; margin-bottom: 20px; }
+    .hero-text p { font-size: 18px; color: var(--text2); line-height: 1.7; margin-bottom: 32px; max-width: 540px; }
+    .hero-text .btns { display: flex; gap: 12px; }
+    .hero-text .btns a { text-decoration: none; font-size: 16px; font-weight: 700; padding: 14px 32px; border-radius: 10px; transition: all 0.3s; display: inline-block; }
+    .hero-text .btns .primary { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; box-shadow: 0 4px 25px rgba(35,134,54,0.4); }
+    .hero-text .btns .primary:hover { transform: translateY(-3px); box-shadow: 0 8px 35px rgba(35,134,54,0.5); }
+    .hero-text .btns .secondary { background: rgba(88,166,255,0.08); color: var(--accent); border: 2px solid var(--accent); backdrop-filter: blur(6px); }
+    .hero-text .btns .secondary:hover { background: rgba(88,166,255,0.15); transform: translateY(-3px); }
+    .hero-visual { flex: 1; text-align: center; position: relative; }
+    .hero-visual .mock-dash { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 24px; text-align: left; backdrop-filter: blur(10px); animation: float 4s ease-in-out infinite; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .hero-visual .mock-dash .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .hero-visual .mock-dash .bar .d { font-size: 18px; color: var(--accent); font-weight: 700; }
+    .hero-visual .mock-dash .bar .dots { display: flex; gap: 4px; }
+    .hero-visual .mock-dash .bar .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); }
+    .hero-visual .mock-dash .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .hero-visual .mock-dash .row .stat-box { flex: 1; background: rgba(13,17,23,0.4); border-radius: 8px; padding: 12px; }
+    .light .hero-visual .mock-dash .row .stat-box { background: rgba(0,0,0,0.03); }
+    .hero-visual .mock-dash .row .stat-box .v { font-size: 20px; font-weight: 700; color: var(--accent); }
+    .hero-visual .mock-dash .row .stat-box .l { font-size: 11px; color: var(--text2); }
+    .hero-visual .mock-dash .table { margin-top: 12px; }
+    .hero-visual .mock-dash .table .th { display: flex; padding: 8px; font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    .hero-visual .mock-dash .table .th span { flex: 1; }
+    .hero-visual .mock-dash .table .tr { display: flex; padding: 8px; font-size: 12px; border-bottom: 1px solid var(--border); }
+    .hero-visual .mock-dash .table .tr span { flex: 1; color: var(--text2); }
+    .hero-visual .mock-dash .table .tr span:first-child { color: var(--text); }
+    .hero-visual .face-badge { position: absolute; top: -12px; right: -12px; background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; box-shadow: 0 4px 15px rgba(99,102,241,0.4); animation: pulse 2s infinite; }
+    .section { max-width: 1200px; margin: 0 auto; padding: 60px 40px; position: relative; z-index: 1; }
+    .section h2 { text-align: center; font-size: 32px; margin-bottom: 12px; color: var(--text); }
+    .section .subtitle { text-align: center; color: var(--text2); font-size: 16px; margin-bottom: 48px; }
+    .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    .feature { background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--card-border); border-radius: 16px; padding: 32px 24px; transition: all 0.3s; animation: fadeIn 0.6s ease-out; position: relative; overflow: hidden; }
+    .feature::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0; transition: opacity 0.3s; }
+    .feature:hover { transform: translateY(-4px); border-color: rgba(88,166,255,0.4); box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px rgba(88,166,255,0.05); }
+    .feature:hover::before { opacity: 1; }
+    .feature:nth-child(1) { animation-delay: 0.1s; }
+    .feature:nth-child(2) { animation-delay: 0.2s; }
+    .feature:nth-child(3) { animation-delay: 0.3s; }
+    .feature:nth-child(4) { animation-delay: 0.4s; }
+    .feature:nth-child(5) { animation-delay: 0.5s; }
+    .feature:nth-child(6) { animation-delay: 0.6s; }
+    .feature .icon { font-size: 36px; margin-bottom: 16px; display: block; }
+    .feature h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+    .feature p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+    .feature.highlight { border-color: rgba(139,92,246,0.5); background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.04)); }
+    .feature.highlight::before { background: linear-gradient(90deg, transparent, #8b5cf6, transparent); }
+    .feature.highlight:hover { border-color: rgba(139,92,246,0.7); box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px rgba(139,92,246,0.1); }
+    .stats-row { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin: 40px 0; }
+    .stat-item { text-align: center; padding: 24px 32px; min-width: 140px; background: var(--card-bg); backdrop-filter: blur(8px); border: 1px solid var(--card-border); border-radius: 12px; }
+    .stat-item .num { font-size: 40px; font-weight: 800; background: linear-gradient(135deg, var(--accent), #79c0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-item .label { font-size: 14px; color: var(--text2); margin-top: 4px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .step { text-align: center; padding: 32px 20px; background: var(--card-bg); backdrop-filter: blur(8px); border: 1px solid var(--card-border); border-radius: 16px; transition: all 0.3s; }
+    .step:hover { border-color: rgba(88,166,255,0.3); transform: translateY(-2px); }
+    .step .num { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #1f6feb); color: #fff; font-size: 20px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 0 20px rgba(88,166,255,0.3); }
+    .step h3 { font-size: 18px; margin-bottom: 8px; }
+    .step p { color: var(--text2); font-size: 14px; line-height: 1.6; }
+    .testimonials { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .testimonial { background: var(--card-bg); backdrop-filter: blur(8px); border: 1px solid var(--card-border); border-radius: 16px; padding: 28px 24px; position: relative; }
+    .testimonial .quote { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 16px; font-style: italic; }
+    .testimonial .quote::before { content: '"'; font-size: 32px; color: var(--accent); opacity: 0.4; line-height: 0; vertical-align: -6px; margin-right: 4px; }
+    .testimonial .author { display: flex; align-items: center; gap: 10px; }
+    .testimonial .author .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8b5cf6); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 700; }
+    .testimonial .author .info .name { font-size: 13px; font-weight: 600; }
+    .testimonial .author .info .role { font-size: 11px; color: var(--text3); }
+    .pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .plan { background: var(--card-bg); backdrop-filter: blur(8px); border: 1px solid var(--card-border); border-radius: 16px; padding: 32px 24px; text-align: center; transition: all 0.3s; position: relative; }
+    .plan:hover { transform: translateY(-4px); border-color: rgba(88,166,255,0.4); }
+    .plan.featured { border-color: var(--accent); box-shadow: 0 0 30px rgba(88,166,255,0.1); }
+    .plan.featured::before { content: "POPULAR"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--accent), #8b5cf6); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 16px; border-radius: 20px; letter-spacing: 1px; }
+    .plan .price { font-size: 42px; font-weight: 800; color: var(--text); margin: 16px 0 8px; }
+    .plan .price span { font-size: 16px; color: var(--text2); font-weight: 400; }
+    .plan .desc { color: var(--text2); font-size: 14px; margin-bottom: 20px; }
+    .plan ul { list-style: none; text-align: left; margin-bottom: 24px; }
+    .plan ul li { padding: 6px 0; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+    .plan ul li::before { content: "✓"; color: var(--green); font-weight: 700; }
+    .plan .btn { display: inline-block; text-decoration: none; font-size: 14px; font-weight: 700; padding: 12px 32px; border-radius: 8px; transition: all 0.3s; width: 100%; }
+    .plan .btn.primary { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; }
+    .plan .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(35,134,54,0.4); }
+    .plan .btn.secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .plan .btn.secondary:hover { border-color: var(--accent); }
+    .faq { max-width: 760px; margin: 0 auto; }
+    .faq-item { background: var(--card-bg); backdrop-filter: blur(8px); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+    .faq-item .q { padding: 18px 20px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+    .faq-item .q:hover { background: rgba(255,255,255,0.03); }
+    .faq-item .q .arrow { transition: transform 0.3s; font-size: 12px; color: var(--text3); }
+    .faq-item.open .q .arrow { transform: rotate(180deg); }
+    .faq-item .a { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+    .faq-item.open .a { max-height: 200px; padding: 0 20px 18px; }
+    .faq-item .a p { font-size: 14px; color: var(--text2); line-height: 1.7; }
+    .face-section { background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(99,102,241,0.03)); border: 1px solid rgba(139,92,246,0.2); border-radius: 20px; padding: 48px; text-align: center; margin: 40px 0; }
+    .face-section h2 { font-size: 28px; }
+    .face-section .face-icon { font-size: 64px; display: block; margin-bottom: 16px; }
+    .face-section .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+    .face-section .badges span { background: rgba(139,92,246,0.12); color: #8b5cf6; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(139,92,246,0.2); }
+    .people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .person-card { background: var(--card-bg); backdrop-filter: blur(8px); border: 1px solid var(--card-border); border-radius: 14px; padding: 24px 16px; text-align: center; transition: all 0.3s; position: relative; }
+    .person-card:hover { transform: translateY(-3px); border-color: rgba(88,166,255,0.3); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .person-card .avatar { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; }
+    .person-card .name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .person-card .role-text { font-size: 12px; color: var(--text2); margin: 2px 0 12px; }
+    .person-card .connect-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.25s; }
+    .person-card .connect-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+    .person-card .connect-btn.connected { background: var(--green); color: #fff; border-color: var(--green); }
+    .person-card .bio { font-size: 11px; color: var(--text3); margin-bottom: 10px; line-height: 1.4; }
+    .cta { text-align: center; padding: 60px 40px; border-top: 1px solid var(--border); position: relative; z-index: 1; }
+    .cta h2 { font-size: 36px; margin-bottom: 12px; }
+    .cta p { color: var(--text2); font-size: 16px; margin-bottom: 32px; }
+    .cta a { text-decoration: none; font-size: 18px; font-weight: 700; padding: 16px 40px; border-radius: 10px; background: linear-gradient(135deg, #238636, #2ea043); color: #fff; box-shadow: 0 4px 25px rgba(35,134,54,0.4); transition: all 0.3s; display: inline-block; }
+    .cta a:hover { transform: translateY(-3px); box-shadow: 0 8px 35px rgba(35,134,54,0.5); }
+    footer { padding: 40px 40px 24px; border-top: 1px solid var(--border); position: relative; z-index: 1; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-bottom: 32px; }
+    .footer-col h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    .footer-col a { display: block; font-size: 13px; color: var(--text2); text-decoration: none; margin-bottom: 8px; transition: color 0.2s; }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-col p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .footer-bottom { text-align: center; font-size: 12px; color: var(--text3); padding-top: 20px; border-top: 1px solid var(--border); }
+    .contact-card { background: var(--card-bg); backdrop-filter: blur(8px); border: 1px solid var(--card-border); border-radius: 16px; padding: 32px; max-width: 480px; margin: 0 auto; text-align: center; }
+    .contact-card p { font-size: 14px; color: var(--text2); margin-bottom: 16px; }
+    .contact-card a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .contact-card a:hover { text-decoration: underline; }
+    @media (max-width: 1024px) {
+      .hero { padding: 60px 32px 40px; gap: 40px; }
+      .hero-text h1 { font-size: 36px; }
+      .features { grid-template-columns: repeat(2, 1fr); }
+      .pricing { grid-template-columns: repeat(2, 1fr); }
+      .section { padding: 48px 32px; }
+    }
+    @media (max-width: 768px) {
+      .nav { padding: 12px 16px; }
+      .nav .links a { font-size: 13px; padding: 6px 14px; }
+      .hero { flex-direction: column; text-align: center; padding: 40px 20px; gap: 30px; }
+      .hero-text h1 { font-size: 28px; }
+      .hero-text p { font-size: 15px; }
+      .hero-text .btns { flex-direction: column; align-items: center; }
+      .hero-text .btns a { width: 100%; max-width: 280px; text-align: center; }
+      .hero-visual .mock-dash { padding: 16px; }
+      .hero-visual .face-badge { font-size: 9px; padding: 3px 10px; top: -8px; right: -8px; }
+      .section { padding: 40px 16px; }
+      .section h2 { font-size: 24px; }
+      .section .subtitle { font-size: 14px; margin-bottom: 32px; }
+      .features { grid-template-columns: 1fr; }
+      .stats-row { gap: 12px; }
+      .stat-item { min-width: 100px; padding: 16px 20px; }
+      .stat-item .num { font-size: 28px; }
+      .stat-item .label { font-size: 12px; }
+      .steps { grid-template-columns: 1fr; }
+      .testimonials { grid-template-columns: 1fr; }
+      .pricing { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+      .people-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+      .face-section { padding: 32px 20px; }
+      .face-section h2 { font-size: 22px; }
+      .face-section .badges span { font-size: 10px; padding: 4px 10px; }
+      .faq-item .q { font-size: 13px; padding: 14px 16px; }
+      .faq-item .a p { font-size: 12px; }
+      .cta { padding: 40px 16px; }
+      .cta h2 { font-size: 24px; }
+      .cta a { width: 100%; max-width: 280px; font-size: 15px; padding: 14px 32px; }
+      .contact-card { padding: 24px 16px; }
+      .plan .price { font-size: 32px; }
+    }
+    @media (max-width: 480px) {
+      .hero-text h1 { font-size: 22px; }
+      .hero-text p { font-size: 14px; margin-bottom: 24px; }
+      .nav { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+      .nav .logo { font-size: 16px; }
+      .nav .links { gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+      .nav .links a { font-size: 11px; padding: 5px 10px; }
+      .theme-toggle { font-size: 14px; padding: 4px 8px; }
+      .hero { padding: 24px 12px; gap: 20px; }
+      .hero-visual .mock-dash .bar .d { font-size: 14px; }
+      .hero-visual .mock-dash .row .stat-box { padding: 8px; }
+      .hero-visual .mock-dash .row .stat-box .v { font-size: 16px; }
+      .hero-visual .mock-dash .row .stat-box .l { font-size: 9px; }
+      .hero-visual .mock-dash .table .tr { font-size: 10px; padding: 6px; }
+      .hero-visual .mock-dash .table .th { font-size: 9px; padding: 6px; }
+      .section { padding: 28px 12px; }
+      .section h2 { font-size: 20px; }
+      .section .subtitle { font-size: 12px; margin-bottom: 24px; }
+      .stat-item { min-width: 70px; padding: 10px 12px; }
+      .stat-item .num { font-size: 20px; }
+      .stat-item .label { font-size: 10px; }
+      .stats-row { gap: 8px; }
+      .feature { padding: 20px 16px; }
+      .feature h3 { font-size: 15px; }
+      .feature p { font-size: 12px; }
+      .people-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+      .person-card { padding: 12px 8px; }
+      .person-card .avatar { width: 40px; height: 40px; font-size: 14px; }
+      .person-card .name { font-size: 11px; }
+      .person-card .role-text { font-size: 9px; }
+      .person-card .bio { font-size: 9px; margin-bottom: 8px; }
+      .person-card .connect-btn { font-size: 11px; padding: 4px 12px; }
+      .face-section { padding: 24px 16px; }
+      .face-section h2 { font-size: 18px; }
+      .face-section .face-icon { font-size: 40px; }
+      .face-section .badges { gap: 6px; }
+      .face-section .badges span { font-size: 9px; padding: 3px 8px; }
+      .testimonial { padding: 20px 16px; }
+      .testimonial .quote { font-size: 12px; }
+      .plan { padding: 24px 16px; }
+      .plan .price { font-size: 28px; }
+      .plan ul li { font-size: 11px; }
+      .plan .btn { font-size: 12px; padding: 10px 20px; }
+      .step { padding: 24px 16px; }
+      .step .num { width: 40px; height: 40px; font-size: 16px; }
+      .step h3 { font-size: 15px; }
+      .step p { font-size: 12px; }
+      .faq-item .q { font-size: 12px; padding: 12px 14px; }
+      .contact-card { padding: 20px; }
+      .contact-card p { font-size: 12px; }
+      .cta { padding: 28px 12px; }
+      .cta h2 { font-size: 20px; }
+      .cta p { font-size: 13px; }
+      .cta a { font-size: 14px; padding: 12px 24px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+      .footer-col h4 { font-size: 12px; }
+      .footer-col a { font-size: 11px; }
+      .footer-col p { font-size: 11px; }
+    }
+    @media (max-width: 360px) {
+      .hero-text h1 { font-size: 18px; }
+      .nav .logo { font-size: 14px; }
+      .nav .links a { font-size: 10px; padding: 4px 8px; }
+      .stat-item { min-width: 60px; padding: 8px 8px; }
+      .stat-item .num { font-size: 16px; }
+      .people-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+      .person-card .avatar { width: 32px; height: 32px; font-size: 12px; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <nav class="nav">
+    <div class="logo"><span>◆</span> TalentOS</div>
+    <div class="links">
+      <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <a href="/auth/login" class="login">Sign In</a>
+      <a href="/auth/signup" class="signup">Get Started</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Recruit smarter.<br>Hire faster.</h1>
+      <p>All-in-one recruitment platform with AI-powered candidate matching, multi-factor authentication, real-time collaboration, and deep analytics — built for modern hiring teams.</p>
+      <div class="btns">
+        <a href="/auth/signup" class="primary">Create Free Account</a>
+        <a href="/auth/login" class="secondary">Sign In →</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="mock-dash">
+        <div class="bar">
+          <span class="d">◆ TalentOS</span>
+          <div class="dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="row">
+          <div class="stat-box"><div class="v">124</div><div class="l">Active Jobs</div></div>
+          <div class="stat-box"><div class="v">48</div><div class="l">New Apps</div></div>
+          <div class="stat-box"><div class="v">92%</div><div class="l">Filled Rate</div></div>
+        </div>
+        <div class="table">
+          <div class="th"><span>Candidate</span><span>Position</span><span>Status</span></div>
+          <div class="tr"><span>Sarah Chen</span><span>Engineer</span><span style="color:var(--green)">Interview</span></div>
+          <div class="tr"><span>James Liu</span><span>Designer</span><span style="color:var(--orange)">Screening</span></div>
+          <div class="tr"><span>Maria Garcia</span><span>PM</span><span style="color:var(--accent)">Offer</span></div>
+        </div>
+      </div>
+      <span class="face-badge">🤖 Face ID Ready</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Trusted by growing teams</h2>
+    <p class="subtitle">Real metrics from the TalentOS platform</p>
+    <div class="stats-row">
+      <div class="stat-item"><div class="num">{{ stats.jobs }}</div><div class="label">Jobs Posted</div></div>
+      <div class="stat-item"><div class="num">{{ stats.companies }}</div><div class="label">Companies</div></div>
+      <div class="stat-item"><div class="num">{{ stats.applications }}</div><div class="label">Applications</div></div>
+      <div class="stat-item"><div class="num">{{ stats.users }}</div><div class="label">Users</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Everything you need to hire</h2>
+    <p class="subtitle">From job posting to offer letter — all in one platform</p>
+    <div class="features">
+      <div class="feature"><span class="icon">💼</span><h3>Job Posting</h3><p>Create and manage job listings with rich descriptions, skills requirements, and salary ranges. Search and filter by location, type, and experience level.</p></div>
+      <div class="feature"><span class="icon">📋</span><h3>Applicant Tracking</h3><p>Full ATS pipeline from applied → screening → interview → offer → hired. Score candidates, upload resumes, and track every application.</p></div>
+      <div class="feature highlight"><span class="icon">🤖</span><h3>Face Recognition Auth</h3><p>3-step security: password, time-based OTP via email, and optional face recognition powered by browser-based TensorFlow.js. Enterprise-grade protection with liveness detection.</p></div>
+      <div class="feature"><span class="icon">📊</span><h3>Analytics & Charts</h3><p>Real-time dashboard with application trends, status distribution, and hiring metrics. Built with Chart.js for interactive data visualization.</p></div>
+      <div class="feature"><span class="icon">✉️</span><h3>Messaging & Collab</h3><p>Built-in messaging with read receipts and conversation threading. Interview scheduling with calendar integration and automated notifications.</p></div>
+      <div class="feature"><span class="icon">📰</span><h3>Social & Community</h3><p>Company reviews, star ratings, social feed with likes and comments, user discovery, and activity timeline. Build your hiring community.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Network</h2>
+    <p class="subtitle">Connect with People — discover talent, build your network, grow together</p>
+    {% set gradients = ['#f093fb,#f5576c','#4facfe,#00f2fe','#43e97b,#38f9d7','#fa709a,#fee140','#a18cd1,#fbc2eb','#ff758c,#ff7eb3','#667eea,#764ba2','#f7971e,#ffd200','#00b4db,#0083b0','#fc5c7d,#6a82fb','#c94b4b,#4b134f','#02aab0,#00cdac'] %}
+    <div class="people-grid">
+      {% for p in people %}
+      <div class="person-card">
+        <div class="avatar" style="background:linear-gradient(135deg,{{ gradients[(loop.index0) % 12] }})">{{ p.name[:2].upper() }}</div>
+        <div class="name">{{ p.name }}</div>
+        <div class="role-text">{{ p.headline or p.role|title }}</div>
+        <div class="bio">{{ (p.summary[:80] if p.summary else '') or p.email }}</div>
+        <button class="connect-btn" onclick="toggleConnect(this)">+ Connect</button>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="face-section">
+      <span class="face-icon">🤖</span>
+      <h2>Next-Level Security with Face Recognition</h2>
+      <p class="subtitle" style="margin-bottom:12px">Password → OTP → Face — three layers of protection</p>
+      <p style="font-size:14px;color:var(--text2);max-width:600px;margin:0 auto">TalentOS uses browser-based TensorFlow.js models (TinyFaceDetector + FaceRecognitionNet) to generate unique face descriptors. Your face data is encrypted and never leaves your control. 99.7% accuracy rate with liveness detection.</p>
+      <div class="badges">
+        <span>🔐 AES-256 Encrypted</span>
+        <span>⚡ Real-time Detection</span>
+        <span>📱 Works on Mobile</span>
+        <span>🔄 Auto-Liveness Check</span>
+        <span>🚫 Anti-Spoofing</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>See what our users say</h2>
+    <p class="subtitle">Trusted by recruiters and hiring managers worldwide</p>
+    <div class="testimonials">
+      <div class="testimonial">
+        <p class="quote">TalentOS cut our time-to-hire by 40%. The face recognition login is a game-changer for security compliance.</p>
+        <div class="author">
+          <div class="avatar">AK</div>
+          <div class="info"><div class="name">Anika Kapoor</div><div class="role">HR Lead, TechCorp India</div></div>
+        </div>
+      </div>
+      <div class="testimonial">
+        <p class="quote">The ATS pipeline with interview scheduling replaced three separate tools we were using. Clean UI, fast performance.</p>
+        <div class="author">
+          <div class="avatar">MJ</div>
+          <div class="info"><div class="name">Marcus Johnson</div><div class="role">CTO, StartupHub</div></div>
+        </div>
+      </div>
+      <div class="testimonial">
+        <p class="quote">We onboarded 200+ candidates in the first month. The analytics dashboard gives us insights we never had before.</p>
+        <div class="author">
+          <div class="avatar">EL</div>
+          <div class="info"><div class="name">Elena Larsson</div><div class="role">Talent Director, Nordika</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>How it works</h2>
+    <p class="subtitle">Get started in minutes</p>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Create Account</h3><p>Sign up with your email and set up multi-factor auth. Optional face recognition for faster logins.</p></div>
+      <div class="step"><div class="num">2</div><h3>Post or Apply</h3><p>Companies post jobs with details and requirements. Candidates discover opportunities and apply with resumes.</p></div>
+      <div class="step"><div class="num">3</div><h3>Track & Hire</h3><p>Move candidates through the pipeline, schedule interviews, and make offers — all from one dashboard.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Frequently asked questions</h2>
+    <p class="subtitle">Everything you need to know</p>
+    <div class="faq">
+      <div class="faq-item">
+        <div class="q" onclick="toggleFaq(this)">Is TalentOS really free?<span class="arrow">▼</span></div>
+        <div class="a"><p>Yes! The Starter plan is completely free with no time limit. You can create profiles, apply to jobs, and use basic features at no cost. Premium plans unlock advanced tools for teams.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="q" onclick="toggleFaq(this)">How does face recognition work?<span class="arrow">▼</span></div>
+        <div class="a"><p>Face recognition runs entirely in your browser using TensorFlow.js. When you enroll, a unique mathematical descriptor of your face is created and stored securely. Your actual image is never sent to our servers — only the encrypted numerical descriptor.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="q" onclick="toggleFaq(this)">Can I use it on mobile?<span class="arrow">▼</span></div>
+        <div class="a"><p>Yes! TalentOS is fully responsive and works on all modern browsers including Chrome, Safari, Firefox, and Edge on both desktop and mobile devices. The face recognition feature works with front-facing cameras on phones.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="q" onclick="toggleFaq(this)">How is my data protected?<span class="arrow">▼</span></div>
+        <div class="a"><p>All data is encrypted in transit via TLS 1.3 and at rest using AES-256. Passwords are hashed using scrypt. Face descriptors are stored as encrypted numerical vectors — your actual face image is never stored on our servers after enrollment.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="q" onclick="toggleFaq(this)">Can I switch plans later?<span class="arrow">▼</span></div>
+        <div class="a"><p>Absolutely. You can upgrade or downgrade at any time. All your data is preserved when switching plans. We offer a 14-day free trial on all paid plans with no commitment.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Get in touch</h2>
+    <p class="subtitle">We'd love to hear from you</p>
+    <div class="contact-card">
+      <p>Have questions, feedback, or need help? Reach out to our team anytime.</p>
+      <p>📧 <a href="mailto:simonpetercys@gmail.com">simonpetercys@gmail.com</a></p>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:0">We typically respond within 24 hours</p>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Ready to transform your hiring?</h2>
+    <p>Join thousands of teams using TalentOS to find and hire top talent.</p>
+    <a href="/auth/signup">Create Free Account →</a>
+  </section>
+
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>◆ TalentOS</h4>
+        <p>All-in-one recruitment platform built for modern hiring teams. AI-powered matching, multi-factor security, and real-time collaboration.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="/">Home</a>
+        <a href="/auth/signup">Sign Up</a>
+        <a href="/auth/login">Sign In</a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#" onclick="alert('About page coming soon!')">About</a>
+        <a href="#" onclick="alert('Contact: simonpetercys@gmail.com')">Contact</a>
+        <a href="#" onclick="alert('Privacy Policy: We do not share your data with third parties.')">Privacy Policy</a>
+        <a href="#" onclick="alert('Terms of Service: TalentOS is provided as-is.')">Terms of Service</a>
+      </div>
+      <div class="footer-col">
+        <h4>Developers</h4>
+        <a href="https://github.com/Anesh2302/talentos" target="_blank" rel="noopener">GitHub Repo</a>
+        <a href="https://github.com/Anesh2302/talentos/issues" target="_blank" rel="noopener">Report Issue</a>
+        <a href="https://opencode.ai" target="_blank" rel="noopener">Powered by OpenCode</a>
+      </div>
+    </div>
+    <div class="footer-bottom">TalentOS v2.0 — Recruitment Platform &copy; 2026. Built with Flask &amp; Vercel.</div>
+  </footer>
+
+  <script>
+    function toggleConnect(btn) {
+      if (btn.classList.contains('connected')) {
+        btn.classList.remove('connected');
+        btn.innerHTML = '+ Connect';
+      } else {
+        btn.classList.add('connected');
+        btn.innerHTML = '✓ Connected';
+      }
+    }
+    function toggleTheme() {
+      const body = document.body;
+      body.classList.toggle('light');
+      const isLight = body.classList.contains('light');
+      document.cookie = 'theme=' + (isLight ? 'light' : 'dark') + ';path=/;max-age=31536000';
+      document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+    }
+    if (document.cookie.includes('theme=light')) { document.body.classList.add('light'); document.getElementById('themeBtn').textContent = '☀️'; }
+
+    function toggleFaq(el) {
+      const item = el.parentElement;
+      item.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>

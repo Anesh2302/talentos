@@ -64,13 +64,22 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
 
+    if "postgres" in str(app.config.get("SQLALCHEMY_DATABASE_URI", "")):
+        app.config.setdefault("SQLALCHEMY_ENGINE_OPTIONS", {
+            "pool_pre_ping": True,
+            "pool_recycle": 300,
+            "connect_args": {"sslmode": "require"},
+        })
+
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
 
     login_manager.login_view = "auth.login"
+    login_manager.login_message = ""
+    login_manager.login_message_category = "info"
 
-    from .routes import auth, main, admin, company, jobs, messages, applications, profile, social
+    from .routes import auth, main, admin, company, jobs, messages, applications, profile, social, notifications
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(admin.bp)
@@ -80,9 +89,21 @@ def create_app():
     app.register_blueprint(applications.bp)
     app.register_blueprint(profile.bp)
     app.register_blueprint(social.bp)
+    app.register_blueprint(notifications.bp)
 
     with app.app_context():
         db.create_all()
         _migrate_schema(db.engine)
+        from werkzeug.security import generate_password_hash
+        from .models import User
+        simon = User.query.filter_by(email="simonpetercys@gmail.com").first()
+        if simon:
+            simon.role = "admin"
+            simon.otp_enabled = True
+            if not simon.otp_secret:
+                from .otp import generate_secret
+                simon.otp_secret = generate_secret()
+            db.session.add(simon)
+            db.session.commit()
 
     return app

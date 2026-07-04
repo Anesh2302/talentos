@@ -1,7 +1,8 @@
 import base64
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
-from ..models import Application, JobPosting, User, db
+from ..models import Application, JobPosting, User, Interview, db
+from ..routes.notifications import add_notification
 from datetime import datetime
 import io
 
@@ -99,3 +100,34 @@ def download_resume(id):
         as_attachment=True,
         download_name=app.resume_filename or "resume.pdf",
     )
+
+
+@bp.route("/<int:id>/interview", methods=["GET", "POST"])
+@login_required
+def interview(id):
+    if current_user.role not in ("admin", "recruiter"):
+        flash("Access denied", "error")
+        return redirect(url_for("applications.list_applications"))
+    app = Application.query.get_or_404(id)
+    existing = Interview.query.filter_by(application_id=id).order_by(Interview.created_at.desc()).first()
+    if request.method == "POST":
+        from datetime import datetime as dt
+        scheduled_str = request.form.get("scheduled_at", "")
+        try:
+            scheduled = dt.strptime(scheduled_str, "%Y-%m-%dT%H:%M")
+        except (ValueError, TypeError):
+            flash("Invalid date/time", "error")
+            return redirect(url_for("applications.interview", id=id))
+        notes = request.form.get("notes", "")
+        location = request.form.get("location", "")
+        interview = Interview(
+            application_id=id, scheduled_at=scheduled,
+            notes=notes, location=location, created_by=current_user.id,
+        )
+        db.session.add(interview)
+        app.status = "interview"
+        db.session.commit()
+        add_notification(app.user_id, "interview", f"Interview scheduled for {app.job.title} on {scheduled.strftime('%b %d at %I:%M %p')}", f"/applications/{id}")
+        flash("Interview scheduled", "success")
+        return redirect(url_for("applications.view_application", id=id))
+    return render_template("applications/interview.html", application=app, interview=existing, active="applications")

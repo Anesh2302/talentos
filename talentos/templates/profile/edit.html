@@ -4,7 +4,7 @@
 {% block content %}
 <div class="card">
   <h3>Profile Info</h3>
-  <form method="POST" action="/profile/edit">
+  <form method="POST" action="/profile/edit" enctype="multipart/form-data">
     <div class="form-row">
       <div><label for="name">Full Name</label><input type="text" id="name" name="name" value="{{ current_user.name }}" required></div>
       <div><label for="headline">Headline</label><input type="text" id="headline" name="headline" value="{{ current_user.headline or '' }}" placeholder="e.g. Senior Software Engineer"></div>
@@ -13,12 +13,25 @@
       <div><label for="location">Location</label><input type="text" id="location" name="location" value="{{ current_user.location or '' }}" placeholder="City, Country"></div>
       <div><label for="phone">Phone</label><input type="text" id="phone" name="phone" value="{{ current_user.phone or '' }}"></div>
     </div>
-    <label for="profile_pic">Profile Picture URL</label>
+    <label for="profile_pic_file">Profile Picture (upload)</label>
+    <input type="file" id="profile_pic_file" name="profile_pic_file" accept="image/*" style="padding:8px">
+    <label for="profile_pic">Or Profile Picture URL</label>
     <input type="url" id="profile_pic" name="profile_pic" value="{{ current_user.profile_pic or '' }}" placeholder="https://example.com/photo.jpg">
     <label for="summary">Summary</label>
     <textarea id="summary" name="summary" placeholder="Tell your story...">{{ current_user.summary or '' }}</textarea>
     <label for="skills">Skills (comma separated)</label>
     <input type="text" id="skills" name="skills" value="{{ current_user.skills|map(attribute='skill.name')|join(', ') }}" placeholder="Python, React, SQL">
+    <div class="section-title" style="font-size:14px;color:var(--text2);font-weight:700;margin:8px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)">Professional Profiles</div>
+    <div class="form-row">
+      <div><label for="linkedin">LinkedIn URL</label><input type="url" id="linkedin" name="linkedin" value="{{ current_user.linkedin or '' }}" placeholder="https://linkedin.com/in/..."></div>
+      <div><label for="github">GitHub URL</label><input type="url" id="github" name="github" value="{{ current_user.github or '' }}" placeholder="https://github.com/..."></div>
+    </div>
+    <label for="website">Website / Portfolio</label>
+    <input type="url" id="website" name="website" value="{{ current_user.website or '' }}" placeholder="https://yoursite.com">
+    <div class="section-title" style="font-size:14px;color:var(--text2);font-weight:700;margin:8px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)">Default Resume</div>
+    <label for="resume">Upload Resume (PDF, DOC, DOCX)</label>
+    <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx,.txt" style="padding:8px">
+    {% if current_user.default_resume_filename %}<p style="font-size:12px;color:var(--text2);margin:-8px 0 12px">Current: {{ current_user.default_resume_filename }}</p>{% endif %}
     <button type="submit" class="btn btn-primary">Save Profile</button>
     <a href="/profile" class="btn btn-secondary">Cancel</a>
   </form>
@@ -26,28 +39,46 @@
 
 <div class="card">
   <h3>Change Password</h3>
-  <form method="POST" action="/profile/change-password">
+  <form method="POST" action="/profile/change-password" id="pwForm">
     <label for="current_password">Current Password</label>
     <input type="password" id="current_password" name="current_password" required>
     <label for="new_password">New Password</label>
-    <input type="password" id="new_password" name="new_password" required minlength="6">
+    <input type="password" id="new_password" name="new_password" required minlength="8" style="margin-bottom:6px">
+    <div id="pwStrength" style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <span id="pwLen" style="font-size:11px;color:var(--text3);padding:2px 8px;border-radius:4px;border:1px solid var(--border)">8+ chars</span>
+      <span id="pwUpper" style="font-size:11px;color:var(--text3);padding:2px 8px;border-radius:4px;border:1px solid var(--border)">A-Z</span>
+      <span id="pwLower" style="font-size:11px;color:var(--text3);padding:2px 8px;border-radius:4px;border:1px solid var(--border)">a-z</span>
+      <span id="pwNum" style="font-size:11px;color:var(--text3);padding:2px 8px;border-radius:4px;border:1px solid var(--border)">0-9</span>
+      <span id="pwSpec" style="font-size:11px;color:var(--text3);padding:2px 8px;border-radius:4px;border:1px solid var(--border)">!@#$%</span>
+    </div>
     <label for="confirm_password">Confirm New Password</label>
-    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+    <input type="password" id="confirm_password" name="confirm_password" required minlength="8">
     <button type="submit" class="btn btn-primary">Change Password</button>
   </form>
 </div>
+<script>
+document.getElementById('new_password').addEventListener('input', function() {
+  const v = this.value;
+  function set(id, ok) { const el = document.getElementById(id); el.style.borderColor = ok ? 'var(--green)' : 'var(--border)'; el.style.color = ok ? 'var(--green)' : 'var(--text3)'; el.style.background = ok ? 'rgba(63,185,80,0.1)' : 'transparent'; }
+  set('pwLen', v.length >= 8);
+  set('pwUpper', /[A-Z]/.test(v));
+  set('pwLower', /[a-z]/.test(v));
+  set('pwNum', /[0-9]/.test(v));
+  set('pwSpec', /[!@#$%^&*(),.?":{}|<>_\-+]/.test(v));
+});
+</script>
 
 <div class="card">
   <h3>Two-Factor Authentication (OTP)</h3>
   {% if current_user.otp_enabled %}
-  <p style="color:#3fb950;margin-bottom:12px">✓ OTP is currently enabled</p>
+  <p style="color:var(--green);margin-bottom:12px">✓ OTP is currently enabled</p>
   <form method="POST" action="/profile/disable-otp">
     <label for="otp_password">Enter your password to disable</label>
     <input type="password" id="otp_password" name="password" required>
     <button type="submit" class="btn btn-danger">Disable OTP</button>
   </form>
   {% else %}
-  <p style="color:#8b949e;margin-bottom:12px">OTP is disabled. Enable two-factor authentication for extra security.</p>
+  <p style="color:var(--text2);margin-bottom:12px">OTP is disabled. Enable two-factor authentication for extra security.</p>
   <form method="POST" action="/profile/enable-otp">
     <label for="otp_password">Enter your password to enable</label>
     <input type="password" id="otp_password" name="password" required>

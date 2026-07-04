@@ -3,15 +3,21 @@
 {% block heading %}Face Recognition Setup{% endblock %}
 {% block content %}
 <style>
-  @keyframes camPulse { 0%,100% { border-color:#30363d; } 50% { border-color:#58a6ff; } }
+  @keyframes camPulse { 0%,100% { border-color:var(--border); } 50% { border-color:var(--accent); } }
   @keyframes scanLine { 0% { top:-2px; } 100% { top:100%; } }
   @keyframes reveal { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
-  @keyframes checkmark { 0% { transform:scale(0) rotate(-45deg); } 50% { transform:scale(1.2) rotate(0); } 100% { transform:scale(1) rotate(0); } }
-  .video-wrap { position:relative; border:2px solid #30363d; border-radius:12px; overflow:hidden; animation:camPulse 2.5s infinite; margin:0 auto 12px; max-width:320px; }
-  .video-wrap::after { content:""; position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#58a6ff,transparent); animation:scanLine 2s ease-in-out infinite; }
+  .video-wrap { position:relative; border:2px solid var(--border); border-radius:12px; overflow:hidden; animation:camPulse 2.5s infinite; margin:0 auto 12px; max-width:320px; }
+  .video-wrap::after { content:""; position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent),transparent); animation:scanLine 2s ease-in-out infinite; }
   video, canvas { border-radius:10px; background:#000; width:100%; max-width:320px; display:block; }
   canvas { animation:reveal 0.4s ease-out; }
 </style>
+
+{% if current_user.face_descriptor %}
+<div class="card" style="text-align:center;margin-bottom:16px;animation:fadeIn 0.5s ease-out">
+  <div style="color:var(--green);font-size:16px;font-weight:600">✓ Face ID is enrolled</div>
+  <div style="font-size:13px;color:var(--text2);margin-top:8px">You can re-enroll your face at any time.</div>
+</div>
+{% endif %}
 
 <div class="grid" style="grid-template-columns:1fr 1fr">
   <div class="card" style="text-align:center">
@@ -23,7 +29,7 @@
       <button id="captureBtn" class="btn btn-primary" disabled>Capture Face</button>
       <a href="/profile" class="btn btn-secondary">Back</a>
     </div>
-    <div id="status" style="margin-top:12px;color:#8b949e;font-size:13px;transition:all 0.3s"></div>
+    <div id="status" style="margin-top:12px;color:var(--text2);font-size:13px;transition:all 0.3s"></div>
   </div>
   <div class="card" style="text-align:center">
     <h3>Preview</h3>
@@ -46,7 +52,7 @@ async function startCamera() {
     document.getElementById('status').textContent = 'Camera ready. Loading face model...';
     await loadModels();
   } catch (err) {
-    document.getElementById('status').innerHTML = '<span style="color:#f85149">Camera access denied: ' + err.message + '</span>';
+    document.getElementById('status').innerHTML = '<span style="color:var(--red)">Camera access denied: ' + err.message + '</span>';
   }
 }
 
@@ -59,7 +65,7 @@ async function loadModels() {
     document.getElementById('captureBtn').disabled = false;
     document.getElementById('status').innerHTML = 'Model loaded. Look at the camera and click <strong>Capture</strong>.';
   } catch (err) {
-    document.getElementById('status').innerHTML = '<span style="color:#f85149">Failed to load model: ' + err.message + '</span>';
+    document.getElementById('status').innerHTML = '<span style="color:var(--red)">Failed to load model: ' + err.message + '</span>';
   }
 }
 
@@ -75,11 +81,11 @@ async function capture() {
   canvas.getContext('2d').drawImage(video, 0, 0, 320, 240);
   capturedImage = canvas.toDataURL('image/jpeg', 0.8);
 
-  status.innerHTML = '<span class="loading-spinner" style="display:inline-block;vertical-align:middle"></span> Detecting face...';
+  status.innerHTML = 'Detecting face...';
   try {
     const detection = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceDescriptor();
     if (!detection) {
-      result.innerHTML = '<span style="color:#f85149;animation:fadeIn 0.3s">✕ No face detected. Try again.</span>';
+      result.innerHTML = '<span style="color:var(--red);animation:fadeIn 0.3s">✕ No face detected. Try again.</span>';
       status.textContent = 'Position your face clearly in the frame.';
       btn.disabled = false;
       return;
@@ -87,25 +93,25 @@ async function capture() {
     faceDescriptor = Array.from(detection.descriptor);
     const box = detection.detection.box;
     const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#3fb950';
+    ctx.strokeStyle = 'var(--green)';
     ctx.lineWidth = 3;
     ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-    const res = await fetch('/auth/face/enroll', {
+    const res = await fetch('/auth/face/capture', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ descriptor: faceDescriptor, image: capturedImage })
     });
     const data = await res.json();
-    if (res.ok) {
-      result.innerHTML = '<span style="color:#3fb950;animation:fadeIn 0.5s">✓ Face registered successfully!</span>';
-      status.innerHTML = '<span style="color:#3fb950">You can now log in with your face.</span>';
+    if (res.ok && data.match) {
+      result.innerHTML = '<span style="color:var(--green);animation:fadeIn 0.5s">✓ Face registered successfully!</span>';
+      status.innerHTML = '<span style="color:var(--green)">You can now log in with your face.</span>';
     } else {
-      result.innerHTML = '<span style="color:#f85149;animation:fadeIn 0.3s">✕ Error: ' + (data.error || 'Unknown') + '</span>';
+      result.innerHTML = '<span style="color:var(--red);animation:fadeIn 0.3s">✕ Error: ' + (data.error || 'Unknown') + '</span>';
       btn.disabled = false;
     }
   } catch (err) {
-    result.innerHTML = '<span style="color:#f85149;animation:fadeIn 0.3s">✕ Error: ' + err.message + '</span>';
+    result.innerHTML = '<span style="color:var(--red);animation:fadeIn 0.3s">✕ Error: ' + err.message + '</span>';
     status.textContent = 'Face detection failed.';
     btn.disabled = false;
   }

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Schedule Interview{% endblock %}
+{% block heading %}Schedule Interview{% endblock %}
+{% block content %}
+<div class="card" style="max-width:500px">
+  <h3>{{ application.job.title }} — {{ application.applicant.name }}</h3>
+  {% if interview %}
+  <div style="background:#1c2128;border-radius:8px;padding:16px;margin-bottom:16px">
+    <div style="font-size:13px;color:#58a6ff;font-weight:600">Scheduled Interview</div>
+    <div style="font-size:13px;color:#c9d1d9;margin-top:8px">{{ interview.scheduled_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+    <div style="font-size:12px;color:#8b949e;margin-top:4px">Status: {{ interview.status }}</div>
+    {% if interview.location %}<div style="font-size:12px;color:#8b949e">Location: {{ interview.location }}</div>{% endif %}
+    {% if interview.notes %}<div style="font-size:12px;color:#8b949e;margin-top:8px">{{ interview.notes }}</div>{% endif %}
+  </div>
+  {% endif %}
+  <form method="POST">
+    <label>Date & Time</label>
+    <input type="datetime-local" name="scheduled_at" required>
+    <label>Location / Video Link</label>
+    <input type="text" name="location" placeholder="Office address or video call link">
+    <label>Notes</label>
+    <textarea name="notes" placeholder="Interview instructions, agenda..."></textarea>
+    <button type="submit" class="btn btn-primary">Schedule Interview</button>
+    <a href="/applications/{{ application.id }}" class="btn btn-secondary" style="margin-left:8px">Cancel</a>
+  </form>
+</div>
+{% endblock %}

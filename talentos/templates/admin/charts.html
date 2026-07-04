@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}TalentOS — Analytics{% endblock %}
+{% block heading %}Analytics{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="card">
+    <h3>Applications Over Time</h3>
+    <canvas id="appChart" height="200"></canvas>
+  </div>
+  <div class="card">
+    <h3>Application Status Distribution</h3>
+    <canvas id="statusChart" height="200"></canvas>
+  </div>
+</div>
+<div class="card">
+  <h3>Jobs Posted Over Time</h3>
+  <canvas id="jobsChart" height="150"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('appChart'), {
+  type: 'bar',
+  data: {
+    labels: {{ app_over_time|map(attribute='date')|list|tojson }},
+    datasets: [{ label: 'Applications', data: {{ app_over_time|map(attribute='count')|list|tojson }}, backgroundColor: 'rgba(88,166,255,0.6)' }]
+  },
+  options: { responsive: true, plugins: { legend: { labels: { color: '#8b949e' } } }, scales: { x: { ticks: { color: '#8b949e' } }, y: { ticks: { color: '#8b949e' } } } }
+});
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: {{ status_counts|map(attribute='status')|list|tojson }},
+    datasets: [{ data: {{ status_counts|map(attribute='count')|list|tojson }}, backgroundColor: ['#1f6feb','#d29922','#f0883e','#3fb950','#f85149','#56d364'] }]
+  },
+  options: { responsive: true, plugins: { legend: { labels: { color: '#8b949e' } } } }
+});
+new Chart(document.getElementById('jobsChart'), {
+  type: 'line',
+  data: {
+    labels: {{ jobs_over_time|map(attribute='date')|list|tojson }},
+    datasets: [{ label: 'Jobs Posted', data: {{ jobs_over_time|map(attribute='count')|list|tojson }}, borderColor: '#f0883e', tension: 0.3 }]
+  },
+  options: { responsive: true, plugins: { legend: { labels: { color: '#8b949e' } } }, scales: { x: { ticks: { color: '#8b949e' } }, y: { ticks: { color: '#8b949e' } } } }
+});
+</script>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template, redirect, url_for
+from flask import Blueprint, jsonify, render_template, redirect, url_for, session
 from flask_login import login_required, current_user
 from ..models import JobPosting, Application, Company, User, db
 from datetime import datetime, date
@@ -8,12 +8,22 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def index():
-    return redirect(url_for("main.dashboard"))
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+    stats = {
+        "jobs": f"{JobPosting.query.count():,}",
+        "users": f"{User.query.count():,}",
+        "companies": f"{Company.query.count():,}",
+        "applications": f"{Application.query.count():,}",
+    }
+    people = User.query.order_by(User.created_at.desc()).limit(6).all()
+    return render_template("landing.html", stats=stats, people=people)
 
 
 @bp.route("/dashboard")
 @login_required
 def dashboard():
+    session.pop("_flashes", None)
     total_jobs = JobPosting.query.count()
     open_jobs = JobPosting.query.filter_by(status="open").count()
     total_apps = Application.query.count()
@@ -34,4 +44,12 @@ def dashboard():
         "companies": total_companies,
         "users": total_users,
     }
-    return render_template("dashboard.html", stats=stats, recent_apps=recent_apps, my_jobs=my_jobs, active="dashboard")
+    hr = datetime.utcnow().hour
+    if hr < 12:
+        greeting = "Good Morning"
+    elif hr < 17:
+        greeting = "Good Afternoon"
+    else:
+        greeting = "Good Evening"
+    now = datetime.utcnow()
+    return render_template("dashboard.html", stats=stats, recent_apps=recent_apps, my_jobs=my_jobs, active="dashboard", greeting=greeting, day=now.strftime("%A"), date_str=now.strftime("%B %d, %Y"), time_str=now.strftime("%I:%M %p"))
