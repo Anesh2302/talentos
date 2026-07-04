@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
 from ..models import Message, Conversation, ConversationParticipant, User, db
-from datetime import datetime
+from datetime import datetime, timedelta
 
 bp = Blueprint("messages", __name__, url_prefix="/messages")
 
@@ -161,3 +161,29 @@ def start_or_find_conversation(user_id):
         db.session.add(participant)
     db.session.commit()
     return jsonify({"redirect": url_for("messages.view_conversation", id=conversation.id)})
+
+
+@bp.route("/status/<int:user_id>")
+@login_required
+def user_status(user_id):
+    user = User.query.get_or_404(user_id)
+    online = user.last_seen and (datetime.utcnow() - user.last_seen) < timedelta(minutes=5)
+    last_seen_str = ""
+    if user.last_seen:
+        delta = datetime.utcnow() - user.last_seen
+        if delta < timedelta(minutes=1):
+            last_seen_str = "Just now"
+        elif delta < timedelta(hours=1):
+            mins = int(delta.total_seconds() // 60)
+            last_seen_str = f"{mins}m ago"
+        elif delta < timedelta(days=1):
+            hours = int(delta.total_seconds() // 3600)
+            last_seen_str = f"{hours}h ago"
+        else:
+            days = delta.days
+            last_seen_str = f"{days}d ago"
+    return jsonify({
+        "online": online,
+        "last_seen": last_seen_str,
+        "last_seen_iso": user.last_seen.isoformat() if user.last_seen else None,
+    })

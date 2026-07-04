@@ -51,6 +51,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     face_verified = db.Column(db.Boolean, default=False)
     face_fail_count = db.Column(db.Integer, default=0)
+    last_seen = db.Column(db.DateTime, nullable=True)
 
     company = db.relationship("Company", foreign_keys=[company_id], lazy=True)
     skills = db.relationship("UserSkill", lazy=True)

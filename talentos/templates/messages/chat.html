@@ -5,10 +5,7 @@
   <a href="/messages" style="color:#8b949e;text-decoration:none;font-size:20px;">←</a>
   <div>
     <div style="color:#f0f6fc;font-weight:600;font-size:16px;">{{ other.name if other else 'Chat' }}</div>
-    <div style="color:#8b949e;font-size:12px;">
-      {% if other and other.headline %}{{ other.headline }} · {% endif %}
-      {% if other and other.email %}{{ other.email }}{% endif %}
-    </div>
+    <div style="color:#8b949e;font-size:12px;">{{ other.headline if other and other.headline else '' }}</div>
   </div>
 </div>
 {% endblock %}
@@ -34,6 +31,9 @@
   .day-separator::before { left:0; }
   .day-separator::after { right:0; }
   .empty-state { flex:1; display:flex; align-items:center; justify-content:center; color:#484f58; font-size:14px; }
+  .online-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .online-dot.online { background:#3fb950; }
+  .online-dot.offline { background:#484f58; }
 </style>
 
 <div class="chat-container">
@@ -41,8 +41,9 @@
     <div class="chat-avatar">{{ other.name[0] if other else '?' }}</div>
     <div>
       <div style="color:#f0f6fc;font-weight:600;">{{ other.name if other else 'Chat' }}</div>
-      <div style="color:#3fb950;font-size:12px;">
-        {% if other %}{{ other.headline or 'Online' }}{% endif %}
+      <div style="font-size:12px;">
+        <span id="statusDot" class="online-dot"></span>
+        <span id="statusLabel">Loading...</span>
       </div>
     </div>
   </div>
@@ -57,7 +58,7 @@
         {% endif %}
         <div class="chat-message {{ 'sent' if m.sender_id == current_user.id else 'received' }}">
           <div class="chat-bubble">{{ m.content }}</div>
-          <div class="chat-time">{{ m.created_at.strftime('%I:%M %p') }}</div>
+          <div class="chat-time" data-utc="{{ m.created_at.isoformat() }}"></div>
         </div>
       {% endfor %}
     {% else %}
@@ -73,7 +74,56 @@
 </div>
 
 <script>
+function formatTime(isoString) {
+  var d = new Date(isoString + 'Z');
+  var now = new Date();
+  var hours = d.getHours();
+  var minutes = d.getMinutes();
+  var ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  var str = hours + ':' + (minutes < 10 ? '0' : '') + minutes + ' ' + ampm;
+  var diff = (now - d) / 1000;
+  if (diff < 60) return str;
+  var isToday = d.toDateString() === now.toDateString();
+  var yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  var isYesterday = d.toDateString() === yesterday.toDateString();
+  if (isToday) return str;
+  if (isYesterday) return 'Yesterday ' + str;
+  return (d.getMonth()+1) + '/' + d.getDate() + '/' + d.getFullYear() + ' ' + str;
+}
+
+function updateStatus() {
+  fetch('/messages/status/{{ other.id if other else 0 }}')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var dot = document.getElementById('statusDot');
+      var label = document.getElementById('statusLabel');
+      if (d.online) {
+        dot.className = 'online-dot online';
+        label.textContent = 'Online';
+        label.style.color = '#3fb950';
+      } else {
+        dot.className = 'online-dot offline';
+        label.textContent = d.last_seen ? 'Offline · Seen ' + d.last_seen : 'Offline';
+        label.style.color = '#8b949e';
+      }
+    })
+    .catch(function() {});
+}
+
+function convertTimes() {
+  var els = document.querySelectorAll('.chat-time[data-utc]');
+  for (var i = 0; i < els.length; i++) {
+    els[i].textContent = formatTime(els[i].getAttribute('data-utc'));
+  }
+}
+
 window.onload = function() {
+  convertTimes();
+  updateStatus();
+  setInterval(updateStatus, 30000);
   var el = document.getElementById('chatMessages');
   if (el) el.scrollTop = el.scrollHeight;
 };
