@@ -60,15 +60,34 @@ def edit_profile():
         current_user.linkedin = request.form.get("linkedin", "")
         current_user.github = request.form.get("github", "")
         current_user.website = request.form.get("website", "")
+        MAX_FILE = 5 * 1024 * 1024
         if "resume" in request.files and request.files["resume"].filename:
             f = request.files["resume"]
-            current_user.default_resume_data = base64.b64encode(f.read()).decode()
-            current_user.default_resume_filename = f.filename
-            current_user.default_resume_mime = f.content_type or "application/octet-stream"
+            f.seek(0, 2)
+            if f.tell() > MAX_FILE:
+                flash("Resume must be under 5MB", "error")
+                return redirect(url_for("profile.edit_profile"))
+            f.seek(0)
+            try:
+                current_user.default_resume_data = base64.b64encode(f.read()).decode()
+                current_user.default_resume_filename = f.filename
+                current_user.default_resume_mime = f.content_type or "application/octet-stream"
+            except Exception:
+                flash("Failed to upload resume. Try a different file.", "error")
+                return redirect(url_for("profile.edit_profile"))
         if "profile_pic_file" in request.files and request.files["profile_pic_file"].filename:
             f = request.files["profile_pic_file"]
-            current_user.profile_pic_data = base64.b64encode(f.read()).decode()
-            current_user.profile_pic = ""
+            f.seek(0, 2)
+            if f.tell() > MAX_FILE:
+                flash("Profile picture must be under 5MB", "error")
+                return redirect(url_for("profile.edit_profile"))
+            f.seek(0)
+            try:
+                current_user.profile_pic_data = base64.b64encode(f.read()).decode()
+                current_user.profile_pic = ""
+            except Exception:
+                flash("Failed to upload profile picture. Try a different image.", "error")
+                return redirect(url_for("profile.edit_profile"))
         elif request.form.get("profile_pic", ""):
             current_user.profile_pic = request.form.get("profile_pic", "")
             current_user.profile_pic_data = ""
@@ -169,13 +188,7 @@ def enable_otp():
 @bp.route("/disable-otp", methods=["POST"])
 @login_required
 def disable_otp():
-    pw = request.form.get("password", "")
-    if not current_user.check_password(pw):
-        flash("Invalid password.", "error")
-        return redirect(url_for("profile.edit_profile"))
-    current_user.otp_enabled = False
-    db.session.commit()
-    flash("OTP two-factor authentication disabled.", "success")
+    flash("OTP is mandatory and cannot be disabled.", "error")
     return redirect(url_for("profile.edit_profile"))
 
 

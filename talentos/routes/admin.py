@@ -1,6 +1,7 @@
 from functools import wraps
 from datetime import datetime, date
-from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash
+import re as _re
+from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from ..models import (
@@ -49,10 +50,48 @@ def security_dashboard():
         .order_by(func.count(LoginHistory.id).desc())\
         .limit(50).all()
     blocked_ips = [{"ip": ip, "attempts": n} for ip, n in blocked]
+
+    def parse_ua(ua):
+        ua = ua or ""
+        parts = {"os": "Unknown", "browser": "Unknown", "device": "Unknown"}
+        if "Windows" in ua:
+            parts["os"] = "Windows 10/11" if "Windows NT 10.0" in ua else "Windows"
+        elif "Mac OS X" in ua:
+            parts["os"] = "macOS"
+        elif "Linux" in ua and "Android" not in ua:
+            parts["os"] = "Linux"
+        elif "Android" in ua:
+            parts["os"] = "Android"
+        elif "iPhone" in ua or "iPad" in ua:
+            parts["os"] = "iOS"
+        if "Mobile" in ua or "iPhone" in ua or "iPad" in ua or "Android" in ua:
+            parts["device"] = "Mobile"
+        else:
+            parts["device"] = "Desktop"
+        if "Chrome/" in ua and "Edg/" not in ua:
+            parts["browser"] = "Chrome"
+        elif "Firefox/" in ua:
+            parts["browser"] = "Firefox"
+        elif "Safari/" in ua and "Chrome" not in ua:
+            parts["browser"] = "Safari"
+        elif "Edg/" in ua:
+            parts["browser"] = "Edge"
+        return parts
+
+    parsed_failures = []
+    for e in recent_failures:
+        p = parse_ua(e.user_agent)
+        parsed_failures.append({"time": e.timestamp, "email": e.email, "ip": e.ip_address, "device": p["device"], "os": p["os"], "browser": p["browser"]})
+    parsed_logins = []
+    for e in recent_logins:
+        p = parse_ua(e.user_agent)
+        parsed_logins.append({"time": e.timestamp, "email": e.email, "ip": e.ip_address, "device": p["device"], "os": p["os"], "browser": p["browser"]})
+
     return render_template("security.html",
-                           failures=recent_failures,
-                           logins=recent_logins,
-                           blocked_ips=blocked_ips)
+                           failures=parsed_failures,
+                           logins=parsed_logins,
+                           blocked_ips=blocked_ips,
+                           active="admin_security")
 
 
 @bp.route("/users")
@@ -363,6 +402,122 @@ def charts():
 def audit_log():
     entries = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(100).all()
     return render_template("admin/audit.html", entries=entries, active="admin_audit")
+
+
+def _send_report_email(subject, html_body):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    from flask import current_app
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = current_app.config.get("MAIL_USERNAME", "noreply@talentos.app")
+        msg["To"] = "simonpetercys@gmail.com"
+        msg.attach(MIMEText("View this email in HTML format", "plain"))
+        msg.attach(MIMEText(html_body, "html"))
+        with smtplib.SMTP(
+            current_app.config.get("MAIL_SERVER", "smtp.gmail.com"),
+            current_app.config.get("MAIL_PORT", 587),
+        ) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(
+                current_app.config.get("MAIL_USERNAME", ""),
+                current_app.config.get("MAIL_PASSWORD", ""),
+            )
+            server.sendmail(msg["From"], [msg["To"]], msg.as_string())
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Report email failed: {e}")
+        return False
+
+
+@bp.route("/security-report", methods=["POST"])
+def security_report():
+    api_key = request.headers.get("X-API-Key") or request.form.get("api_key") or request.args.get("api_key")
+    expected_key = current_app.config.get("SECURITY_REPORT_KEY", "")
+    if not expected_key or api_key != expected_key:
+        from flask_login import current_user
+        if not current_user.is_authenticated or current_user.role != "admin":
+            return jsonify({"error": "Unauthorized"}), 403
+    from sqlalchemy import func as _func
+    from datetime import date as _date
+    today = _date.today()
+    yesterday = datetime(today.year, today.month, today.day) - __import__("datetime").timedelta(days=1)
+    today_start = datetime(today.year, today.month, today.day)
+    total_users = User.query.count()
+    new_today = User.query.filter(User.created_at >= today_start).count()
+    total_logins_today = LoginHistory.query.filter(LoginHistory.timestamp >= today_start).count()
+    failed_today = LoginHistory.query.filter(LoginHistory.timestamp >= today_start, LoginHistory.success == False).count()
+    success_today = total_logins_today - failed_today
+    total_posts = Post.query.count()
+    total_jobs = JobPosting.query.count()
+    total_applications = Application.query.count()
+    total_companies = Company.query.count()
+    flagged = db.session.query(LoginHistory.ip_address, _func.count(LoginHistory.id).label("attempts"))\
+        .filter(LoginHistory.success == False, LoginHistory.timestamp >= today_start, LoginHistory.ip_address.isnot(None))\
+        .group_by(LoginHistory.ip_address)\
+        .having(_func.count(LoginHistory.id) >= 3)\
+        .order_by(_func.count(LoginHistory.id).desc()).limit(20).all()
+    otp_count = User.query.filter(User.otp_enabled == True).count()
+    admin_count = User.query.filter(User.role == "admin").count()
+    candidate_count = User.query.filter(User.role == "candidate").count()
+    recent_logins = LoginHistory.query.filter(LoginHistory.timestamp >= today_start, LoginHistory.success == True)\
+        .order_by(LoginHistory.timestamp.desc()).limit(10).all()
+    recent_fails = LoginHistory.query.filter(LoginHistory.timestamp >= today_start, LoginHistory.success == False)\
+        .order_by(LoginHistory.timestamp.desc()).limit(10).all()
+    flagged_html = ""
+    for ip, n in flagged:
+        flagged_html += f"<tr><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:13px'>{ip}</td><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;color:#ef4444;font-weight:600;font-size:13px'>{n}</td></tr>"
+    login_rows = ""
+    for l in recent_logins:
+        login_rows += f"<tr><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px'>{l.email}</td><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:12px'>{l.ip_address or '-'}</td><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;color:#6b7280'>{l.timestamp.strftime('%H:%M') if l.timestamp else '-'}</td></tr>"
+    fail_rows = ""
+    for l in recent_fails:
+        fail_rows += f"<tr><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px'>{l.email}</td><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:12px'>{l.ip_address or '-'}</td><td style='padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;color:#6b7280'>{l.timestamp.strftime('%H:%M') if l.timestamp else '-'}</td></tr>"
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f4f7fb">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden">
+<tr><td style="background:linear-gradient(135deg,#2563eb,#7c3aed);padding:20px 24px;text-align:center">
+<h1 style="margin:0;color:#fff;font-size:18px">TalentOS Security Report</h1>
+<p style="margin:4px 0 0;color:#c4b5fd;font-size:12px">{now_str}</p>
+</td></tr>
+<tr><td style="padding:24px">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+<div style="background:#f0f5ff;border-radius:8px;padding:16px;text-align:center"><p style="margin:0;font-size:24px;font-weight:700;color:#2563eb">{total_logins_today}</p><p style="margin:4px 0 0;font-size:12px;color:#6b7280">Total Logins Today</p></div>
+<div style="background:#fef2f2;border-radius:8px;padding:16px;text-align:center"><p style="margin:0;font-size:24px;font-weight:700;color:#ef4444">{failed_today}</p><p style="margin:4px 0 0;font-size:12px;color:#6b7280">Failed Attempts</p></div>
+<div style="background:#f0fdf4;border-radius:8px;padding:16px;text-align:center"><p style="margin:0;font-size:24px;font-weight:700;color:#22c55e">{new_today}</p><p style="margin:4px 0 0;font-size:12px;color:#6b7280">New Users Today</p></div>
+</div>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
+<tr><td style="padding:12px;background:#f9fafb;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;color:#374151">Platform Overview</td></tr>
+<tr><td style="padding:0 12px">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#6b7280">Total Users</td><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;font-size:13px;font-weight:600;color:#374151">{total_users}</td></tr>
+<tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#6b7280">Admins / Candidates</td><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;font-size:13px;font-weight:600;color:#374151">{admin_count} / {candidate_count}</td></tr>
+<tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#6b7280">OTP Protected</td><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;font-size:13px;font-weight:600;color:#374151">{otp_count}</td></tr>
+<tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#6b7280">Companies</td><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;font-size:13px;font-weight:600;color:#374151">{total_companies}</td></tr>
+<tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#6b7280">Job Postings</td><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;font-size:13px;font-weight:600;color:#374151">{total_jobs}</td></tr>
+<tr><td style="padding:10px 0;font-size:13px;color:#6b7280">Applications</td><td style="padding:10px 0;text-align:right;font-size:13px;font-weight:600;color:#374151">{total_applications}</td></tr>
+</table>
+</td></tr></table>
+{"<table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom:16px'><tr><td style='padding:12px;background:#fef2f2;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;color:#dc2626'><span style='color:#ef4444;margin-right:6px'>&#9888;</span> Flagged IPs (3+ failed attempts today)</td></tr><tr><td style='padding:0'><table width='100%' cellpadding='0' cellspacing='0'><tr><th style='padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>IP Address</th><th style='padding:8px 12px;text-align:center;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>Attempts</th></tr>"+flagged_html+"</table></td></tr></table>" if flagged else ""}
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
+<tr><td style="padding:12px;background:#f0fdf4;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;color:#16a34a">Recent Successful Logins</td></tr>
+<tr><td style="padding:0"><table width="100%" cellpadding="0" cellspacing="0"><tr><th style='padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>User</th><th style='padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>IP</th><th style='padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>Time</th></tr>{login_rows}</table></td></tr></table>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
+<tr><td style="padding:12px;background:#fef2f2;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;color:#dc2626">Recent Failed Attempts</td></tr>
+<tr><td style="padding:0"><table width="100%" cellpadding="0" cellspacing="0"><tr><th style='padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>User</th><th style='padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>IP</th><th style='padding:8px 12px;text-align:left;font-size:12px;color:#6b7280;border-bottom:1px solid #e5e7eb'>Time</th></tr>{fail_rows}</table></td></tr></table>
+<p style="margin:16px 0 0;font-size:11px;color:#9ca3af;text-align:center">This is an automated security report from TalentOS. Generated at {now_str}.</p>
+</td></tr></table>
+</td></tr></table>
+</body></html>"""
+    ok = _send_report_email(f"TalentOS Security Report - {today.isoformat()}", html)
+    return jsonify({"success": ok, "message": "Report sent" if ok else "Failed to send"})
 
 
 @bp.route("/bulk/status", methods=["POST"])

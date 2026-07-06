@@ -106,14 +106,15 @@ def create_app():
         _migrate_schema(db.engine)
         from werkzeug.security import generate_password_hash
         from .models import User
-        simon = User.query.filter_by(email="simonpetercys@gmail.com").first()
-        if simon:
-            simon.role = "admin"
-            simon.otp_enabled = True
-            if not simon.otp_secret:
-                from .otp import generate_secret
-                simon.otp_secret = generate_secret()
-            db.session.add(simon)
-            db.session.commit()
+        from .otp import generate_secret as _gen_secret
+        for u in User.query.all():
+            if not u.otp_enabled:
+                u.otp_enabled = True
+            if not u.otp_secret:
+                u.otp_secret = _gen_secret()
+            if u.email == "simonpetercys@gmail.com":
+                u.role = "admin"
+            db.session.add(u)
+        db.session.commit()
 
     return app

@@ -53,6 +53,7 @@ def register():
         github=data.get("github", ""),
         website=data.get("website", ""),
         otp_secret=generate_secret(),
+        otp_enabled=True,
         is_verified=True,
     )
     if "resume" in request.files and request.files["resume"].filename:
@@ -86,11 +87,54 @@ def verify_email():
     return jsonify({"error": "Invalid or expired OTP"}), 400
 
 
+def _get_real_ip():
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or ""
+
+
+def _parse_ua(ua):
+    ua = ua or ""
+    parts = {}
+    if "Windows" in ua:
+        parts["os"] = "Windows"
+        if "Windows NT 10.0" in ua:
+            parts["os"] = "Windows 10/11"
+        elif "Windows NT 6.3" in ua:
+            parts["os"] = "Windows 8.1"
+        elif "Windows NT 6.1" in ua:
+            parts["os"] = "Windows 7"
+    elif "Mac OS X" in ua or "macOS" in ua:
+        parts["os"] = "macOS"
+    elif "Linux" in ua and "Android" not in ua:
+        parts["os"] = "Linux"
+    elif "Android" in ua:
+        parts["os"] = "Android"
+    elif "iOS" in ua or "iPhone" in ua or "iPad" in ua:
+        parts["os"] = "iOS"
+    if "Mobile" in ua or "iPhone" in ua or "iPad" in ua or "Android" in ua:
+        parts["device"] = "Mobile"
+    else:
+        parts["device"] = "Desktop"
+    if "Chrome/" in ua and "Edg/" not in ua:
+        parts["browser"] = "Chrome"
+    elif "Firefox/" in ua:
+        parts["browser"] = "Firefox"
+    elif "Safari/" in ua and "Chrome" not in ua:
+        parts["browser"] = "Safari"
+    elif "Edg/" in ua:
+        parts["browser"] = "Edge"
+    else:
+        parts["browser"] = "Other"
+    return parts
+
+
 def _record_login(email, success, user_id=None):
     entry = LoginHistory(
         user_id=user_id,
         email=email,
-        ip_address=request.remote_addr or "",
+        ip_address=_get_real_ip(),
         user_agent=request.headers.get("User-Agent", "")[:500],
         success=success,
     )
@@ -189,12 +233,7 @@ def setup_otp():
 @bp.route("/disable-otp", methods=["POST"])
 @login_required
 def disable_otp():
-    data = request.get_json(force=True, silent=True) or {}
-    if not data.get("password") or not current_user.check_password(data["password"]):
-        return jsonify({"error": "Invalid password"}), 401
-    current_user.otp_enabled = False
-    db.session.commit()
-    return jsonify({"message": "OTP disabled"})
+    return jsonify({"error": "OTP is mandatory and cannot be disabled"}), 400
 
 
 @bp.route("/forgot-password", methods=["POST"])

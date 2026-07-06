@@ -70,21 +70,8 @@ document.getElementById('new_password').addEventListener('input', function() {
 
 <div class="card">
   <h3>Two-Factor Authentication (OTP)</h3>
-  {% if current_user.otp_enabled %}
-  <p style="color:var(--green);margin-bottom:12px">✓ OTP is currently enabled</p>
-  <form method="POST" action="/profile/disable-otp">
-    <label for="otp_password">Enter your password to disable</label>
-    <input type="password" id="otp_password" name="password" required>
-    <button type="submit" class="btn btn-danger">Disable OTP</button>
-  </form>
-  {% else %}
-  <p style="color:var(--text2);margin-bottom:12px">OTP is disabled. Enable two-factor authentication for extra security.</p>
-  <form method="POST" action="/profile/enable-otp">
-    <label for="otp_password">Enter your password to enable</label>
-    <input type="password" id="otp_password" name="password" required>
-    <button type="submit" class="btn btn-primary">Enable OTP</button>
-  </form>
-  {% endif %}
+  <p style="color:var(--green);margin-bottom:12px">✓ OTP is enabled and mandatory on every login</p>
+  <p style="color:var(--text2);font-size:13px;">An OTP code will be sent to your email each time you sign in. This cannot be disabled.</p>
 </div>
 
 <div class="card">

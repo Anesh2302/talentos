@@ -169,9 +169,18 @@ def apply_job(id):
     if "resume" in request.files:
         f = request.files["resume"]
         if f.filename:
-            resume_data = base64.b64encode(f.read()).decode()
-            resume_filename = f.filename
-            resume_mime = f.content_type or "application/octet-stream"
+            f.seek(0, 2)
+            if f.tell() > 10 * 1024 * 1024:
+                flash("Resume must be under 10MB", "error")
+                return redirect(url_for("jobs.job_detail", id=job.id))
+            f.seek(0)
+            try:
+                resume_data = base64.b64encode(f.read()).decode()
+                resume_filename = f.filename
+                resume_mime = f.content_type or "application/octet-stream"
+            except Exception:
+                flash("Failed to process resume. Try a different file.", "error")
+                return redirect(url_for("jobs.job_detail", id=job.id))
 
     application = Application(
         job_id=job.id, user_id=current_user.id,

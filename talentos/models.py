@@ -33,7 +33,7 @@ class User(UserMixin, db.Model):
     profile_pic_data = db.Column(db.Text, default="")
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     otp_secret = db.Column(db.String(32), default="")
-    otp_enabled = db.Column(db.Boolean, default=False)
+    otp_enabled = db.Column(db.Boolean, default=True)
     is_verified = db.Column(db.Boolean, default=False)
     face_descriptor = db.Column(db.Text, default="")
     face_image = db.Column(db.Text, default="")

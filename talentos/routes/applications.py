@@ -75,11 +75,20 @@ def upload_resume(id):
     if not f.filename:
         flash("No file selected", "error")
         return redirect(url_for("applications.view_application", id=id))
-    app.resume_data = base64.b64encode(f.read()).decode()
-    app.resume_filename = f.filename
-    app.resume_mime = f.content_type or "application/octet-stream"
-    db.session.commit()
-    flash("Resume uploaded", "success")
+    MAX_FILE = 10 * 1024 * 1024
+    f.seek(0, 2)
+    if f.tell() > MAX_FILE:
+        flash("Resume must be under 10MB", "error")
+        return redirect(url_for("applications.view_application", id=id))
+    f.seek(0)
+    try:
+        app.resume_data = base64.b64encode(f.read()).decode()
+        app.resume_filename = f.filename
+        app.resume_mime = f.content_type or "application/octet-stream"
+        db.session.commit()
+        flash("Resume uploaded", "success")
+    except Exception:
+        flash("Failed to upload resume. Try a different file.", "error")
     return redirect(url_for("applications.view_application", id=id))
 
 
