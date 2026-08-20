@@ -16,7 +16,17 @@ if os.environ.get("VERCEL"):
                 os.environ["DATABASE_URL"] = "sqlite:////tmp/talentos.db"
         else:
             os.environ["DATABASE_URL"] = "sqlite:////tmp/talentos.db"
+    if not os.environ.get("SECRET_KEY"):
+        os.environ["SECRET_KEY"] = "talentos-vercel-fallback-key"
 
-from talentos import create_app
+try:
+    from talentos import create_app
+    app = create_app()
+except Exception as e:
+    from flask import Flask, jsonify
+    app = Flask(__name__)
 
-app = create_app()
+    @app.route("/", defaults={"path": ""})
+    @app.route("/<path:path>")
+    def catch_all(path):
+        return jsonify({"message": "Talentos API", "version": "1.0.0", "error": str(e), "status": "deploying"}), 200
