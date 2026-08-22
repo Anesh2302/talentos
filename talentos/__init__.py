@@ -102,19 +102,31 @@ def create_app():
             db.session.commit()
 
     with app.app_context():
-        db.create_all()
-        _migrate_schema(db.engine)
-        from werkzeug.security import generate_password_hash
-        from .models import User
-        from .otp import generate_secret as _gen_secret
-        for u in User.query.all():
-            if not u.otp_enabled:
-                u.otp_enabled = True
-            if not u.otp_secret:
-                u.otp_secret = _gen_secret()
-            if u.email == "simonpetercys@gmail.com":
-                u.role = "admin"
-            db.session.add(u)
-        db.session.commit()
+        try:
+            db.create_all()
+        except Exception as exc:
+            app.logger.warning("db.create_all failed: %s", exc)
+        try:
+            _migrate_schema(db.engine)
+        except Exception as exc:
+            app.logger.warning("_migrate_schema failed: %s", exc)
+        try:
+            from .models import User
+            from .otp import generate_secret as _gen_secret
+            for u in User.query.all():
+                if not u.otp_enabled:
+                    u.otp_enabled = True
+                if not u.otp_secret:
+                    u.otp_secret = _gen_secret()
+                if u.email == "simonpetercys@gmail.com":
+                    u.role = "admin"
+                db.session.add(u)
+            db.session.commit()
+        except Exception as exc:
+            app.logger.warning("User seed failed: %s", exc)
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
 
     return app
