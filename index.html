@@ -1,14 +1,8 @@
-from flask import Flask, render_template_string
-
-app = Flask(__name__)
-
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def landing(path):
-    return render_template_string("""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Talentos - Recruitment Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -24,7 +18,8 @@ h1{font-size:2.5rem;font-weight:900;margin-bottom:10px}h1 span{color:#00d4ff}
 .item p{font-size:.75rem;color:#64748b;line-height:1.5}
 .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .btn{display:inline-block;padding:14px 32px;border-radius:12px;font-weight:700;text-decoration:none;font-size:.9rem}
-.green{background:#22c55e;color:#000}.outline{border:1px solid #1e293b;color:#64748b}
+.green{background:#22c55e;color:#000}.green:hover{background:#16a34a}
+.outline{border:1px solid #1e293b;color:#64748b}.outline:hover{border-color:#00d4ff;color:#00d4ff}
 .note{margin-top:30px;padding:14px 20px;border-radius:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);font-size:.8rem;color:#f59e0b}
 .footer{margin-top:20px;font-size:.7rem;color:#374151}
 </style>
@@ -42,12 +37,12 @@ h1{font-size:2.5rem;font-weight:900;margin-bottom:10px}h1 span{color:#00d4ff}
     <div class="item"><h3>Company Profiles</h3><p>Company registration, verification, and team management</p></div>
     <div class="item"><h3>Notifications</h3><p>Real-time alerts for applications, messages, and system events</p></div>
   </div>
-  <div class="note">Full app with database deploys on Render.com. This is a preview page.</div>
+  <div class="note">Full app with database available on Render.com. This is a landing page preview.</div>
   <div class="btns" style="margin-top:24px">
     <a href="https://github.com/Anesh2302/talentos" target="_blank" class="btn green">View on GitHub</a>
     <a href="https://anesh2302.github.io/portfolio/" class="btn outline">Back to Portfolio</a>
   </div>
-  <p class="footer">Built by Anesh G J - Flask + PostgreSQL + TOTP 2FA</p>
+  <p class="footer">Built by Anesh G J &mdash; Flask + PostgreSQL + TOTP 2FA</p>
 </div>
 </body>
-</html>"""), 200
+</html>
