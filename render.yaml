@@ -4,7 +4,7 @@ services:
     runtime: python
     repo: https://github.com/Anesh2302/talentos
     branch: main
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r python-requirements.txt
     startCommand: gunicorn run:app --workers 4 --bind 0.0.0.0:$PORT
     envVars:
       - key: SECRET_KEY
