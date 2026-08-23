@@ -1,21 +1,64 @@
-import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 if os.environ.get("VERCEL"):
-    db_url = os.environ.get("DATABASE_URL", "")
-    if not db_url or db_url.startswith("sqlite"):
-        pg_url = os.environ.get("POSTGRES_URL_NON_POOLING") or os.environ.get("POSTGRES_URL") or ""
-        if pg_url and pg_url.startswith("postgres"):
-            from urllib.parse import urlparse, urlunparse
-            parsed = urlparse(pg_url)
-            os.environ["DATABASE_URL"] = urlunparse(parsed._replace(scheme="postgresql"))
-        else:
-            os.environ["DATABASE_URL"] = "sqlite:////tmp/talentos.db"
-    if not os.environ.get("SECRET_KEY"):
-        os.environ["SECRET_KEY"] = "talentos-v4-prod-key"
+    from flask import Flask, render_template_string
+    app = Flask(__name__)
 
-from talentos import create_app
+    LANDING = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talentos - Recruitment Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{max-width:600px;width:100%;text-align:center}
+.logo{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#00d4ff,#22c55e);display:inline-flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;color:#000;margin-bottom:24px}
+h1{font-size:2.5rem;font-weight:900;margin-bottom:10px}
+h1 span{color:#00d4ff}
+.sub{color:#64748b;font-size:1.05rem;margin-bottom:32px;line-height:1.7}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px}
+.item{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:18px;text-align:left}
+.item h3{font-size:.85rem;font-weight:700;color:#00d4ff;margin-bottom:4px}
+.item p{font-size:.75rem;color:#64748b;line-height:1.5}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;padding:14px 32px;border-radius:12px;font-weight:700;text-decoration:none;font-size:.9rem;transition:all .2s}
+.green{background:#22c55e;color:#000}.green:hover{background:#16a34a}
+.outline{border:1px solid #1e293b;color:#64748b}.outline:hover{border-color:#00d4ff;color:#00d4ff}
+.note{margin-top:30px;padding:14px 20px;border-radius:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);font-size:.8rem;color:#f59e0b}
+.footer{margin-top:20px;font-size:.7rem;color:#374151}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">T</div>
+  <h1>Talent<span>os</span></h1>
+  <p class="sub">Recruitment & Talent Management Platform</p>
+  <div class="grid">
+    <div class="item"><h3>Job Management</h3><p>Post, search, filter, and apply to jobs with resume upload and status tracking</p></div>
+    <div class="item"><h3>2FA Security</h3><p>TOTP 2FA authentication with OTP email verification for secure access</p></div>
+    <div class="item"><h3>Social Feed</h3><p>Posts, comments, likes, follows, and real-time private messaging</p></div>
+    <div class="item"><h3>Admin Dashboard</h3><p>Analytics, security reports, user management, and audit logs</p></div>
+    <div class="item"><h3>Company Profiles</h3><p>Company registration, verification, and team management</p></div>
+    <div class="item"><h3>Notifications</h3><p>Real-time alerts for applications, messages, and system events</p></div>
+  </div>
+  <div class="note">Full app with database deploys automatically. This page shows while the backend initializes.</div>
+  <div class="btns" style="margin-top:24px">
+    <a href="https://github.com/Anesh2302/talentos" target="_blank" class="btn green">View on GitHub</a>
+    <a href="https://anesh2302.github.io/portfolio/" class="btn outline">Back to Portfolio</a>
+  </div>
+  <p class="footer">Built by Anesh G J &mdash; Flask + PostgreSQL + TOTP 2FA</p>
+</div>
+</body>
+</html>"""
 
-app = create_app()
+    @app.route("/", defaults={"path": ""})
+    @app.route("/<path:path>")
+    def landing(path):
+        return render_template_string(LANDING), 200
+
+else:
+    from talentos import create_app
+    app = create_app()
